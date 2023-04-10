@@ -101,15 +101,13 @@ def Get_all_files(path, end=""):
                 yield f
 
 
-def File_list_from_ps(ps):
+def File_list_from_ps(ps,end=".tcb.zip"):
     dirs = []
     for dir in ps.values():
         dirs.append(dir)
     dir = os.path.join(dirs[0], "fem")
     print(f"searching in {dir}")
-    file_list = []
-    for file in Get_all_files(dir, end=".tcb.zip"):
-        file_list.append(file)
+    file_list = get_file_list(dir, reverse=False, end=end)
     return file_list, dir
 
 
@@ -133,8 +131,8 @@ def Select_files_in_file_list(file_list):
                     a, b = b, a
                 if a < 0:
                     a = 0
-                if b >= len(file_list):
-                    b = len(file_list) - 1
+                if b > len(file_list):
+                    b = len(file_list)
                 index_range = range(a, b)
                 break
             else:
@@ -318,7 +316,7 @@ class ConvertingThread(threading.Thread):
 
 
 
-def get_file_list(file_path):
+def get_file_list(file_path, reverse = False, end=".py"):
     """
     :param file_path: the file path where you want to get file
     :return: list, files sorted by name
@@ -328,13 +326,13 @@ def get_file_list(file_path):
         return
     py_list = []
     for x in dir_list:
-        if x.endswith(".py"):
+        if x.endswith(end):
             py_list.append(x)
     else:
         # 注意，这里使用lambda表达式，将文件按照最后修改时间顺序升序排列
         # os.path.getmtime() 函数是获取文件最后修改时间
         # os.path.getctime() 函数是获取文件最后创建时间
-        py_list = sorted(py_list, key=lambda x: os.path.getmtime(os.path.join(file_path, x)),reverse=True)
+        py_list = sorted(py_list, key=lambda x: os.path.getmtime(os.path.join(file_path, x)),reverse=reverse)
         # dir_list = sorted(dir_list, key=lambda x: int(x[:-4]))  # 按名称排序
         # print(dir_list)
         return py_list
@@ -374,7 +372,7 @@ if __name__ == "__main__":
 
         if choice == "1":
             try:
-                target_name = get_file_list(folder_path)[0]
+                target_name = get_file_list(folder_path, reverse=True,end='.py')[0]
             except Exception as e:
                 print(f"[error] no file found in {folder_path}")
             n = input(f"file_name ([{target_name}] by default):")
@@ -423,7 +421,7 @@ if __name__ == "__main__":
             if len(ps.values()) == 0:
                 print("[Info]: No data history")
                 continue
-            file_list, fem_dir = File_list_from_ps(ps)
+            file_list, fem_dir = File_list_from_ps(ps,end='.tcb.zip')
             print(f"find {len(file_list)} files\n{file_list}")
 
             # 确认处理目标
@@ -432,6 +430,7 @@ if __name__ == "__main__":
                 print("invalid input")
                 continue
             target_step = int(c)
+
 
             # 是否要移除txt文件
             remove_txt = False
