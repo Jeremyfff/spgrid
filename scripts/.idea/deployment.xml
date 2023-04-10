@@ -17,6 +17,13 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="恒源云-3060Ti">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/hy-tmp/taichi/projects/spgrid/scripts" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="恒源云-3070(2)">
         <serverdata>
           <mappings>
