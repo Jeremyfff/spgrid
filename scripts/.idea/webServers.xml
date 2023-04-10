@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="b2a53b91-64d4-4995-9665-a54d9430f83b" name="恒源云-P4">
+        <fileTransfer accessType="SFTP" host="i-2.gpushare.com" port="45738" sshConfigId="f9881f66-b044-4afa-8415-ed6a70046198" sshConfig="root@i-2.gpushare.com:45738 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="d71325ef-6e3f-4a5f-9a95-4f1da3b2bdc1" name="恒源云-3070(2)">
+        <fileTransfer accessType="SFTP" host="i-2.gpushare.com" port="45738" sshConfigId="f9881f66-b044-4afa-8415-ed6a70046198" sshConfig="root@i-2.gpushare.com:45738 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
