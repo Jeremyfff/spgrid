@@ -3,7 +3,7 @@ import taichi as tc
 
 # Initialize
 version = 0
-n = 100
+n = 500
 volume_fraction = 0.12
 narrow_band = True
 
@@ -13,7 +13,7 @@ opt = TopoOpt(res=(n,n,n),version=version,volume_fraction=volume_fraction,grid_u
 tex = tc.Texture('mesh',translate=(0.5,0.5,0.5),scale=(1, 1, 1),adaptive=False,filename='projects/spgrid/data/floor_test3.obj')
 
 
-opt.populate_grid(domain_type='texture', tex_id=tex.id)
+opt.populate_grid(domain_type='texture', tex_id=tex.id, mirror='xy')
 
 opt.general_action(action='add_box_dirichlet_bc', axis_to_fix='xyz', bound0=(0.43, -0.5, -0.5), bound1=(0.5, -0.43, 0.18))
 
