@@ -38,6 +38,13 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="恒源云-P4 8G">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/hy-tmp/taichi/projects/spgrid/scripts" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
     </serverData>
   </component>
 </project>

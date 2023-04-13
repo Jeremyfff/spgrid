@@ -16,7 +16,7 @@ def down_from_remote(sftp_obj, remote_dir_name, local_dir_name):
         # 文件夹，不能直接下载，需要继续循环
         check_local_dir(local_dir_name)
         print('开始下载文件夹：' + remote_dir_name)
-        for remote_file_name in sftp.listdir(remote_dir_name):
+        for remote_file_name in sftp_obj.listdir(remote_dir_name):
             sub_remote = os.path.join(remote_dir_name, remote_file_name)
             sub_remote = sub_remote.replace('\\', '/')
             sub_local = os.path.join(local_dir_name, remote_file_name)
@@ -25,7 +25,11 @@ def down_from_remote(sftp_obj, remote_dir_name, local_dir_name):
     else:
         # 文件，直接下载
         print('开始下载文件：' + remote_dir_name)
-        sftp.get(remote_dir_name, local_dir_name)
+        sftp_obj.get(remote_dir_name, local_dir_name)
+def upload_to_remote(sftp_obj,local_dir_name, remote_dir_name):
+    """远程上传文件"""
+    print('开始上传文件：' + remote_dir_name)
+    sftp_obj.put(local_dir_name, remote_dir_name)
 
 
 def check_local_dir(local_dir_name):
@@ -46,9 +50,9 @@ def exec_cmd(client, cmd):
     return output
 
 
-def Get_ps():
+def Get_ps(path="./ps.txt"):
     ps = {}
-    with open("./ps.txt", "r", encoding='utf-8') as f:
+    with open(path, "r", encoding='utf-8') as f:
         lines = f.readlines()
         for line in lines:
             if line == "\n":
@@ -62,6 +66,23 @@ def Get_ps():
             if name not in ps.keys():
                 ps[name] = dir
     return ps
+
+
+def Get_remote_task_path(ps_path="./ps.txt"):
+    ps = Get_ps(ps_path)
+    pths = []
+    for v in ps.values():
+        pths.append(v)
+    remote_task_path = pths[0]
+    return remote_task_path
+
+
+def Get_shared_path(ps_path="./ps.txt"):
+    remote_task_path = Get_remote_task_path(ps_path)
+    _shared_path = remote_task_path.split("/")
+    shared_path = _shared_path[-2] + "/" + _shared_path[-1] + "/"
+    # print(f"shared_path: {shared_path}")
+    return shared_path
 
 
 def get_file_list(file_path, reverse=False, end=".py"):
@@ -109,141 +130,79 @@ def remove_end(file_list):
     return new_file_list
 
 
-if __name__ == "__main__":
-
-    # 远程文件路径（需要绝对路径）
-    remote_dir = r'/hy-tmp/taichi/outputs/topo_opt/'
-    # 本地文件存放路径（绝对路径或者相对路径都可以）
-    local_dir = r'D:\M.Arch\2023Spr\DesignClass_ComputationalDesignandHigh-performance3DPrintingConstruction\Spgrid_topo_opt\outputs'
-
-    
-
-    file_gap = 5
-
-    # 服务器连接信息
-    host_name = '34.28.235.205'
-    user_name = 'root'
-    password = 'fyh1999727'
-    port = 22
-
-    client = paramiko.SSHClient()
+def init_ssh(host_name, port, user_name, password, source_sh=False):
+    ssh = paramiko.SSHClient()
     # 加载系统主机密钥,需要在连接服务器前执行该命令
-    client.load_system_host_keys()
+    ssh.load_system_host_keys()
     # 连接服务器
-    print("connecting server...")
-    client.connect(host_name, port, user_name, password)
-    output = exec_cmd(client, "source /opt/intel/intel2019u5.sh")
+    print(f"connecting to {host_name}:{port}...")
+    ssh.connect(host_name, port, user_name, password)
+    if source_sh:
+        exec_cmd(ssh, "source /opt/intel/intel2019u5.sh")
+    return ssh
+
+
+def init_sftp(host_name, port, user_name, password):
     # 连接远程服务器
     t = paramiko.Transport((host_name, port))
-    print("connecting file server...")
+    print(f"connecting to {host_name}:{port} file server...")
     t.connect(username=user_name, password=password)
     sftp = paramiko.SFTPClient.from_transport(t)
+    return t, sftp
 
-    # 远程文件开始下载ps
-    down_from_remote(sftp, '/hy-tmp/taichi/projects/spgrid/scripts/utils/ps.txt', './ps.txt')
 
-    ps = Get_ps()
-    pths = []
-    for v in ps.values():
-        pths.append(v)
-    remote_task_path = pths[0]
-    _shared_path = remote_task_path.split("/")
-    shared_path = _shared_path[-2] + "/" + _shared_path[-1] + "/"
-    print(f"shared_path: {shared_path}")
-    remote_task_path = os.path.join(remote_dir, shared_path)
-    local_task_path = os.path.join(local_dir, shared_path)
-    remote_fem_path = os.path.join(remote_task_path, "fem")
-    local_fem_path = os.path.join(local_task_path, "fem")
-
-    print(f"remote_fem_path: {remote_fem_path}")
-    print(f"local_fem_path: {local_fem_path}")
-    print("\n")
+def sync_from_remote(ssh,ssh_sftp, remote_fem_path, local_fem_path,end,file_gap=1):
 
     os.makedirs(local_fem_path, exist_ok=True)
-
-    # sync files
-    local_files = get_file_list(local_fem_path, reverse=False, end=".ply")
-    print(f"local_files: {local_files}")
-    remote_files = get_remote_file_list(client, remote_fem_path, end=".tcb.zip")
-    remote_files_tcb = get_remote_file_list(client, remote_fem_path, end=".tcb")
-    remote_files_txt = get_remote_file_list(client, remote_fem_path, end=".txt")
+    local_files = get_file_list(local_fem_path, reverse=False, end=end)
+    remote_files = get_remote_file_list(ssh, remote_fem_path, end=end)
 
     print(f"remote_files: {remote_files}")
-    print(f"remote_files_tcb: {remote_files_tcb}")
-    print(f"remote_files_txt: {remote_files_txt}")
+    print("===============sync from remote============")
+    local_files_n = remove_end(local_files)
+    remote_files_n = remove_end(remote_files)
 
-    local_files_names = remove_end(local_files)
-    remote_files_names = remove_end(remote_files)
-    remote_files_names_tcb = remove_end(remote_files_tcb)
-    remote_files_names_txt = remove_end(remote_files_txt)
+    diff_files_n = []
+    if file_gap == -1:
+        last_r_file = -1
+        idx = 0
+        last_r_file_idx = -1
+        for r_file in remote_files_n:
+            if int(r_file) > last_r_file:
+                last_r_file = int(r_file)
+                last_r_file_idx = idx
+                idx += 1
+        if last_r_file_idx != -1 and remote_files_n[last_r_file_idx] not in local_files_n:
 
-    target_files_names = []
-    for r_file in remote_files_names:
-        if r_file not in local_files_names and int(r_file) % file_gap == 0:
-            target_files_names.append(r_file)
-    print(f"target_files_names: {target_files_names}")
+            # print(f"last_r_file: {last_r_file} idx : {last_r_file_idx}")
+            diff_files_n = [remote_files_n[last_r_file_idx]]
+    else:
+        for r_file in remote_files_n:
+            if r_file not in local_files_n and int(r_file) % file_gap == 0:
+                diff_files_n.append(r_file)
 
-    # start transforming
-    for file_name in target_files_names:
-        if file_name not in remote_files_names_tcb and file_name not in remote_files_names_txt:
-            output = exec_cmd(client, f"cd {remote_fem_path} && unzip -o {file_name + '.tcb.zip'}")
-            print(f"unziping {file_name}.tcb.zip")
-        else:
-            print(f"find unzipped file {file_name}")
+    print(f"diff_files_n: {diff_files_n}")
+    for file_n in diff_files_n:
+        print(f"downloading from {remote_fem_path + '/' + file_n + end}")
+        down_from_remote(ssh_sftp, remote_fem_path + '/' + file_n + end,
+                         local_fem_path + '/' + file_n + end)
+    return diff_files_n
 
-        if file_name not in remote_files_names_txt:
-            output = exec_cmd(client,
-                              f"cd {remote_fem_path} && ti run convert_fem_solve {remote_fem_path}/{file_name}.tcb --with-density")
-            for line in output:
-                print(line)
+def sync_to_remote(ssh, ssh_sftp,local_fem_path,remote_fem_path,end):
+    print("===============sync to remote============")
+    exec_cmd(ssh, f'mkdir -p {remote_fem_path}')
+    local_files = get_file_list(local_fem_path, reverse=False, end=end)
+    remote_files = get_remote_file_list(ssh, remote_fem_path, end=end)
+    local_files_n = remove_end(local_files)
+    remote_files_n = remove_end(remote_files)
+    diff_files_n = []
 
-            org_path = f"{remote_fem_path}/human_readable.txt"
-            new_path = f"{remote_fem_path}/{file_name}.txt"
-            exec_cmd(client,f"cd {remote_fem_path} && mv human_readable.txt {file_name}.txt")
-            exec_cmd(client,f"cd {remote_fem_path} && rm {file_name}.tcb")
-
-    # # user select fem path
-    # fem_path = remote_dir
-    # while True:
-    #     print(fem_path)
-    #     if fem_path.endswith(".tcb.zip") or fem_path.endswith(".tcb") or fem_path.endswith(".txt") or fem_path.endswith(".ply"):
-    #         break
-    #
-    #     output = exec_cmd(client, f"cd {fem_path} && ls")
-    #     msg = ""
-    #     i = 0
-    #     for file in output:
-    #         msg += f"[{i}] {file.strip()}\n"
-    #         i += 1
-    #     msg += "[enter]select  [..]back\n"
-    #     msg += "[user]: "
-    #     c = input(msg)
-    #     if c == "":
-    #         break
-    #     elif c == "..":
-    #         s = fem_path.split("/")
-    #         s = s[0:-2]
-    #         new_fem_path = ""
-    #         for ss in s:
-    #             new_fem_path += ss + "/"
-    #         fem_path = new_fem_path
-    #     else:
-    #         try:
-    #             c = int(c)
-    #             file = output[c].strip()
-    #             if file.endswith(".tcb.zip") or file.endswith(".tcb") or file.endswith(".txt") or file.endswith(".ply"):
-    #                 fem_path += file
-    #                 break
-    #             else:
-    #                 fem_path += file + "/"
-    #
-    #         except Exception as e:
-    #             print(e)
-    #
-    # print(f"final fem path: {fem_path}")
-
-    # 关闭连接
-    client.close()
-
-    # 关闭连接
-    t.close()
+    for r_file in local_files_n:
+        if r_file not in remote_files_n:
+            diff_files_n.append(r_file)
+    print(f"diff_files_n: {diff_files_n}")
+    for file_n in diff_files_n:
+        print(f"uploading to {remote_fem_path + '/' + file_n + end}")
+        upload_to_remote(ssh_sftp,local_fem_path + '/' + file_n + end,
+                         remote_fem_path + '/' + file_n + end)
+    return diff_files_n

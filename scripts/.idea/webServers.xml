@@ -23,6 +23,13 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="7ef35216-5d49-4f2e-84b0-ff1476d6004d" name="恒源云-P4 8G">
+        <fileTransfer accessType="SFTP" host="i-2.gpushare.com" port="48289" sshConfigId="b88b15b9-21f4-4438-a545-234144fe0aa6" sshConfig="root@i-2.gpushare.com:48289 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>

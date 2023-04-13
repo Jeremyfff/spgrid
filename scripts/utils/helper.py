@@ -426,9 +426,9 @@ if __name__ == "__main__":
             for p in ps.keys():
                 Kill_program_byName(p)
             if input("deep clean? (warning: this will close helper.py)[y/n]") == "y":
-                Kill_program_byName("sftp-server")
                 Kill_program_byName("ti")
                 Kill_program_byName("vim")
+                # Kill_program_byName("sftp-server")
                 Kill_program_byName("python3")
         elif choice == "3":
             # 检索文件夹
