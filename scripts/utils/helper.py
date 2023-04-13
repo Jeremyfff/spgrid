@@ -4,15 +4,19 @@ import os
 import threading
 import time
 
-from tqdm import tqdm
-
 config = configparser.ConfigParser()
 
-target_name = "opt_bridge.py"
+target_name = ""
 folder_path = "/hy-tmp/taichi/projects/spgrid/scripts/"
 threshold = 0
 
+
 def ExecCmd(cmd):
+    """
+    执行命令
+    :param cmd: 命令内容
+    :return: 执行结果
+    """
     r = os.popen(cmd)
     text = r.read()
     r.close()
@@ -20,6 +24,11 @@ def ExecCmd(cmd):
 
 
 def Kill_program(PIDS):
+    """
+    根据PID结束进程
+    :param PIDS:
+    :return:
+    """
     for i in range(len(PIDS) - 1):
         Id = PIDS[i]
         os.system('kill -9 ' + Id)
@@ -38,7 +47,7 @@ def Kill_program_byName(name):
     return len(ansLine) - 1
 
 
-def                       Get_ps():
+def Get_ps():
     ps = {}
     with open("ps.txt", "r", encoding='utf-8') as f:
         lines = f.readlines()
@@ -416,6 +425,11 @@ if __name__ == "__main__":
         elif choice == "2":
             for p in ps.keys():
                 Kill_program_byName(p)
+            if input("deep clean? (warning: this will close helper.py)[y/n]") == "y":
+                Kill_program_byName("sftp-server")
+                Kill_program_byName("ti")
+                Kill_program_byName("vim")
+                Kill_program_byName("python3")
         elif choice == "3":
             # 检索文件夹
             if len(ps.values()) == 0:

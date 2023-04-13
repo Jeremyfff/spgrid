@@ -2,22 +2,22 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
-      <webServer id="b2a53b91-64d4-4995-9665-a54d9430f83b" name="恒源云-P4">
-        <fileTransfer accessType="SFTP" host="i-1.gpushare.com" port="63229" sshConfigId="f9881f66-b044-4afa-8415-ed6a70046198" sshConfig="root@i-1.gpushare.com:63229 password">
+      <webServer id="2ecd61fd-5788-4c01-b69b-0d17129a3e96" name="恒源云-3060-24核">
+        <fileTransfer accessType="SFTP" host="i-2.gpushare.com" port="34799" sshConfigId="cbdae1cf-da5b-4652-857a-fec0c1c71287" sshConfig="root@i-2.gpushare.com:34799 password">
           <advancedOptions>
-            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
         </fileTransfer>
       </webServer>
-      <webServer id="d71325ef-6e3f-4a5f-9a95-4f1da3b2bdc1" name="恒源云-3070(2)">
-        <fileTransfer accessType="SFTP" host="i-1.gpushare.com" port="63229" sshConfigId="f9881f66-b044-4afa-8415-ed6a70046198" sshConfig="root@i-1.gpushare.com:63229 password">
+      <webServer id="5daaead9-4925-4b7c-8129-d60bfc8699c2" name="google-c3-8v-16G">
+        <fileTransfer accessType="SFTP" host="34.28.235.205" port="22" sshConfigId="7d5055e1-523c-439e-b026-44732c6940a4" sshConfig="root@34.28.235.205:22 password">
           <advancedOptions>
-            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
         </fileTransfer>
       </webServer>
-      <webServer id="3c1bbaff-89f6-4af3-b326-b856c042d1ae" name="恒源云-3060Ti">
-        <fileTransfer accessType="SFTP" host="i-1.gpushare.com" port="63229" sshConfigId="f9881f66-b044-4afa-8415-ed6a70046198" sshConfig="root@i-1.gpushare.com:63229 password">
+      <webServer id="a7ac395f-549c-4439-a1b9-64db7a43ced0" name="google-c2-8v-32G">
+        <fileTransfer accessType="SFTP" host="34.69.171.127" port="22" sshConfigId="f9881f66-b044-4afa-8415-ed6a70046198" sshConfig="root@34.69.171.127:22 password">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
