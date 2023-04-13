@@ -132,6 +132,7 @@ def remove_end(file_list):
 
 def init_ssh(host_name, port, user_name, password, source_sh=False):
     ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     # 加载系统主机密钥,需要在连接服务器前执行该命令
     ssh.load_system_host_keys()
     # 连接服务器

@@ -3,7 +3,7 @@ import os
 from auto_download import *
 
 if __name__ == "__main__":
-
+    ply_mode = True
 
     # 远程文件路径（需要绝对路径）
     remote_dir = r'/hy-tmp/taichi/outputs/topo_opt/'
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     file_gap = 1
 
     # 服务器连接信息
-    host_name = '34.28.235.205'
+    host_name = '34.27.244.118'
     user_name = 'root'
     password = 'fyh1999727'
     port = 22
@@ -29,6 +29,8 @@ if __name__ == "__main__":
 
     route = init_ssh(route_name, route_port, route_user_name, route_password)
     route_t, route_sftp = init_sftp(route_name, route_port, route_user_name, route_password)
+
+
 
     # 远程文件开始下载ps
     down_from_remote(client_sftp, '/hy-tmp/taichi/projects/spgrid/scripts/utils/ps.txt', './ps.txt')
@@ -47,16 +49,16 @@ if __name__ == "__main__":
     print(f"local_fem_path: {local_fem_path}")
     print("\n")
 
-    sync_from_remote(client,client_sftp,remote_fem_path,local_fem_path,".tcb.zip",file_gap=-1)
+    if not ply_mode:
+        sync_from_remote(client,client_sftp,remote_fem_path,local_fem_path,".tcb.zip",file_gap=-1)
 
-    # exec_cmd(route, f'mkdir -p {remote_fem_path}')
-    diff_file_n = sync_to_remote(route,route_sftp,local_fem_path,route_fem_path,".tcb.zip")
+        # exec_cmd(route, f'mkdir -p {remote_fem_path}')
+        diff_file_n = sync_to_remote(route,route_sftp,local_fem_path,route_fem_path,".tcb.zip")
 
-    upload_to_remote(route_sftp,"./ps.txt", '/hy-tmp/taichi/projects/spgrid/scripts/utils/ps.txt')
+        upload_to_remote(route_sftp,"./ps.txt", '/hy-tmp/taichi/projects/spgrid/scripts/utils/ps.txt')
 
-
-
-    # sync_from_remote(route,route_sftp,remote_fem_path,local_fem_path,".ply",file_gap=1)
+    else:
+        sync_from_remote(route,route_sftp,remote_fem_path,local_fem_path,".ply",file_gap=1)
 
 
     #
