@@ -152,7 +152,7 @@ def init_sftp(host_name, port, user_name, password):
     return t, sftp
 
 
-def sync_from_remote(ssh,ssh_sftp, remote_fem_path, local_fem_path,end,file_gap=1):
+def sync_from_remote(ssh,ssh_sftp, remote_fem_path, local_fem_path,end,file_gap=1,start_idx = 0):
 
     os.makedirs(local_fem_path, exist_ok=True)
     local_files = get_file_list(local_fem_path, reverse=False, end=end)
@@ -179,7 +179,7 @@ def sync_from_remote(ssh,ssh_sftp, remote_fem_path, local_fem_path,end,file_gap=
             diff_files_n = [remote_files_n[last_r_file_idx]]
     else:
         for r_file in remote_files_n:
-            if r_file not in local_files_n and int(r_file) % file_gap == 0:
+            if r_file not in local_files_n and int(r_file) % file_gap == 0 and int(r_file) >= start_idx:
                 diff_files_n.append(r_file)
 
     print(f"diff_files_n: {diff_files_n}")

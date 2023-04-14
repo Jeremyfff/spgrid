@@ -3,7 +3,7 @@ import os
 from auto_download import *
 
 if __name__ == "__main__":
-    ply_mode = True
+    ply_mode = False
 
     # 远程文件路径（需要绝对路径）
     remote_dir = r'/hy-tmp/taichi/outputs/topo_opt/'
@@ -14,11 +14,13 @@ if __name__ == "__main__":
     file_gap = 1
 
     # 服务器连接信息
-    host_name = '34.27.244.118'
+    #google cloud
+    host_name = '34.68.133.28'
     user_name = 'root'
     password = 'fyh1999727'
     port = 22
 
+    # 恒源云 （P4）
     route_name = 'i-2.gpushare.com'
     route_user_name = 'root'
     route_password = '8B3WFZnrzbwmVyXDa2qPwenAY75YNzzS'
@@ -50,14 +52,17 @@ if __name__ == "__main__":
     print("\n")
 
     if not ply_mode:
-        sync_from_remote(client,client_sftp,remote_fem_path,local_fem_path,".tcb.zip",file_gap=-1)
+        # 从google cloud下载文件
+        sync_from_remote(client,client_sftp,remote_fem_path,local_fem_path,".tcb.zip",file_gap=1)
 
-        # exec_cmd(route, f'mkdir -p {remote_fem_path}')
+        # 上传ps到route 服务器
+        upload_to_remote(route_sftp, "./ps.txt", '/hy-tmp/taichi/projects/spgrid/scripts/utils/ps.txt')
+
+        # 上传文件到 route服务器
         diff_file_n = sync_to_remote(route,route_sftp,local_fem_path,route_fem_path,".tcb.zip")
-
-        upload_to_remote(route_sftp,"./ps.txt", '/hy-tmp/taichi/projects/spgrid/scripts/utils/ps.txt')
-
+        print("please manually process data on route server...")
     else:
+        # 从route服务器下载ply文件
         sync_from_remote(route,route_sftp,remote_fem_path,local_fem_path,".ply",file_gap=1)
 
 

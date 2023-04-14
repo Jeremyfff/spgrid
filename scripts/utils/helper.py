@@ -248,7 +248,13 @@ def count_valid_points(lines, threshold):
             block += 1
             continue
     return vertices
-
+def count_valid_points_fast(lines):
+    block = 0
+    for i in range(len(lines)):
+        if lines[i] == "      [" + str(block) + "]: {\n":
+            block += 1
+            continue
+    return block * 64
 
 class ConvertingThread(threading.Thread):
     def __init__(self, file_names, thread_idx):
@@ -302,7 +308,10 @@ class ConvertingThread(threading.Thread):
                 with open(input_path, 'r') as f:
                     lines = f.readlines()
                 thread_info[self.thread_idx]["progress"] = 0.2  # update info
-                valid_points = count_valid_points(lines, threshold)
+                if threshold != 0:
+                    valid_points = count_valid_points(lines, threshold)
+                else:
+                    valid_points = count_valid_points_fast(lines)
                 thread_info[self.thread_idx]["progress"] = 0.5  # update info
                 prefix = f"ply\n" \
                          f"format ascii 1.0\n" \
