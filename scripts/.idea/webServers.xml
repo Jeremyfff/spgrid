@@ -10,7 +10,7 @@
         </fileTransfer>
       </webServer>
       <webServer id="5daaead9-4925-4b7c-8129-d60bfc8699c2" name="google-c3-8v-16G">
-        <fileTransfer accessType="SFTP" host="34.68.133.28" port="22" sshConfigId="7d5055e1-523c-439e-b026-44732c6940a4" sshConfig="root@34.68.133.28:22 password">
+        <fileTransfer accessType="SFTP" host="34.67.74.185" port="22" sshConfigId="7d5055e1-523c-439e-b026-44732c6940a4" sshConfig="root@34.67.74.185:22 password">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

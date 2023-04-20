@@ -2,12 +2,12 @@ from topo_opt import TopoOpt
 import taichi as tc
 
 # Initialize
-version = 0
+version = 1
 n = 800
 volume_fraction = 0.05
 narrow_band = True
 
-opt = TopoOpt(res=(n,n,n),version=version,volume_fraction=volume_fraction,grid_update_start=5 if narrow_band else 1000000,fix_cells_near_force=False,fix_cells_at_dirichlet=False,progressive_vol_frac=0,connectivity_filtering=True,fixed_cell_density=0.5)
+opt = TopoOpt(res=(n,n,n),version=version,volume_fraction=volume_fraction,grid_update_start=5 if narrow_band else 1000000,fix_cells_near_force=False,fix_cells_at_dirichlet=False,progressive_vol_frac=5,connectivity_filtering=True,fixed_cell_density=0.5)
 
 
 opt.populate_grid(domain_type='box', size=(0.5, 0.5, 0.05), mirror='xy')
