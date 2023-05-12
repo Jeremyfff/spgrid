@@ -1,0 +1,6 @@
+# Ignore all files and directories in this folder
+*.ply
+*.png
+
+# Except this file
+!.gitignore
