@@ -12,12 +12,12 @@
       <webServer id="5daaead9-4925-4b7c-8129-d60bfc8699c2" name="google-c3-8v-16G">
         <fileTransfer accessType="SFTP" host="34.67.74.185" port="22" sshConfigId="7d5055e1-523c-439e-b026-44732c6940a4" sshConfig="root@34.67.74.185:22 password">
           <advancedOptions>
-            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
         </fileTransfer>
       </webServer>
       <webServer id="a7ac395f-549c-4439-a1b9-64db7a43ced0" name="google-c2-8v-32G">
-        <fileTransfer accessType="SFTP" host="34.69.171.127" port="22" sshConfigId="f9881f66-b044-4afa-8415-ed6a70046198" sshConfig="root@34.69.171.127:22 password">
+        <fileTransfer accessType="SFTP" host="34.67.74.185" port="22" sshConfigId="7d5055e1-523c-439e-b026-44732c6940a4" sshConfig="root@34.67.74.185:22 password">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
@@ -25,6 +25,13 @@
       </webServer>
       <webServer id="7ef35216-5d49-4f2e-84b0-ff1476d6004d" name="恒源云-P4 8G">
         <fileTransfer accessType="SFTP" host="i-2.gpushare.com" port="48289" sshConfigId="b88b15b9-21f4-4438-a545-234144fe0aa6" sshConfig="root@i-2.gpushare.com:48289 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="f68d29a1-5df1-4175-a8b8-b0fdc854bcea" name="OMEN">
+        <fileTransfer accessType="SFTP" host="10.192.32.26" port="36850" sshConfigId="3aee0143-c087-4135-80f2-fd2448eeb3e5" sshConfig="root@10.192.32.26:36850 password">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

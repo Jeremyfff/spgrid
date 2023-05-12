@@ -40,6 +40,9 @@ class MinimalCompliance : public Objective {
     auto sparse_u1 = grid->u1();
     auto sparse_u2 = grid->u2();
 
+    TC_INFO("=======FORCES SIZE BEFORE=======");
+    TC_P(forces.size());
+
     auto sparse_flags = grid->flags();
     auto sparse_density = grid->density();
     float64 objective = 0.0_f;
@@ -56,8 +59,10 @@ class MinimalCompliance : public Objective {
         if (length(Vector2(p.x, p.z)) < 10.05) {
           objective += -y * d * height_reward;
         }
+
       }
     }
+    TC_INFO("=======FORCES SIZE=======");
     TC_P(forces.size());
 
     bool success;

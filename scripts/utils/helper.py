@@ -11,12 +11,15 @@ if __name__ == "__main__":
     app.run()
     print(app.output)
     if app.exit_task is not None:
-        if type(app.exit_task) == list:
+        if type(app.exit_task) is list:
             print(f"find {len(app.exit_task)} tasks")
             for i in range(len(app.exit_task)):
                 task = app.exit_task[i]
                 kwargs = app.exit_kwargs[i]
                 task.__call__(*kwargs)
         else:
+            print("running exit task")
             app.exit_task.__call__(*app.exit_kwargs)
 
+    else:
+        print("no exit task, program exit")

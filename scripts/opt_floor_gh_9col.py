@@ -3,7 +3,7 @@ import taichi as tc
 
 # Initialize
 version = 0
-n = 1500
+n = 1200
 volume_fraction = 0.05
 narrow_band = True
 

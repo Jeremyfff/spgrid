@@ -3,6 +3,20 @@
   <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false" confirmBeforeUploading="false">
     <option name="confirmBeforeUploading" value="false" />
     <serverData>
+      <paths name="OMEN">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/hy-tmp/taichi/projects/spgrid/scripts" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="google c3">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="google-c2-8v-32G">
         <serverdata>
           <mappings>

@@ -2,6 +2,11 @@
 #include <taichi/testing.h>
 #include "spgrid_topo_opt.h"
 #include "hex_fem.h"
+#include <cstring>
+#include <cstdio>
+#include <iostream>
+#include <fstream>
+
 
 TC_NAMESPACE_BEGIN
 
@@ -710,7 +715,8 @@ std::string SPGridTopologyOptimization3D::general_action(const Config &param) {
       Vector cell_center_pos = i2f(c.get_pos());
       bool failed = false;
       if (bounds[0] <= cell_center_pos && cell_center_pos <= bounds[1]) {
-        bool ret = add_cell_boundary(c.get_ipos(), "xyz", value);
+        //bool ret = add_cell_boundary(c.get_ipos(), "xyz", value);
+        bool ret = add_cell_boundary(c.get_ipos(), axis_to_fix, value);
         failed = failed || !ret;
       }
       if (failed) {
@@ -1229,6 +1235,8 @@ bool SPGridTopologyOptimization3D::fem_solve(
   TC_MEMORY_USAGE("Solver Returned");
   TC_INFO("FEM Solver returned");
 
+
+
   using vector_block_size = FEMInputs::ScalarGrid::block_size;
 
   auto sparse_u0 = grid->u0();
@@ -1238,7 +1246,21 @@ bool SPGridTopologyOptimization3D::fem_solve(
   bounds[0] = 1e30f;
   bounds[1] = -1e30f;
 
+  TC_INFO("========Start output fem result=========");
   has_nan = false;
+  int block_num = 0;
+  bool save_dis = false;
+  if(iter % 10 == 0){
+    save_dis = true;
+  }
+  FILE* file;
+  if(save_dis){
+    char dis_fn[200];
+    sprintf(dis_fn,"%s/fem/%05d.csv",working_directory.c_str(),iter);
+    //string dis_fn = fmt::format("{}/fem/{:05d}_dis.txt", working_directory, iter);
+    file = std::fopen(dis_fn,"w"); //打开文件
+    TC_INFO("========Start writing=========");
+  }
 
   for (auto &block : interface.outputs.displacements.blocks) {
     int i = block.base_coordinates[0];
@@ -1260,6 +1282,21 @@ bool SPGridTopologyOptimization3D::fem_solve(
             sparse_v1(i + ii, j + jj, k + kk) = block.get(ii, jj, kk)[1];
             sparse_v2(i + ii, j + jj, k + kk) = block.get(ii, jj, kk)[2];
           }
+          //std::cout<<"block:"<<block_num<<" ii:"<<ii<<" jj:"<<jj<<" kk:"<<kk<<" v0:"<<block.get(ii, jj, kk)[0]<<" v1:"<<block.get(ii, jj, kk)[1]<<" v2:"<<block.get(ii, jj, kk)[2]<<std::endl;
+
+         // char output[200]; // 50是输出数组的大小，根据实际情况可以适当调整
+
+          // 使用snprintf函数将a和b封装到一句话中，并将结果输出到output数组中
+          //sprintf(output, "%d,%d,%d,%.4f,%.4f,%.4f;", ii+i, jj+j, kk+k, block.get(ii, jj, kk)[0], block.get(ii, jj, kk)[1], block.get(ii, jj, kk)[2]);
+          //std::cout<<output<<std::endl;
+          if(save_dis){
+            std::string output = fmt::format("{},{},{},{:.4f},{:.4f},{:.4f}\n",ii+i, jj+j,kk+k, block.get(ii, jj, kk)[0], block.get(ii, jj, kk)[1], block.get(ii, jj, kk)[2]);
+	        char output_char[output.size() + 1];
+            std::strcpy(output_char, output.c_str());
+	        std::fwrite(output_char,1,sizeof(output_char),file); //写入操作
+          }
+
+
 
           for (int r = 0; r < dim; r++) {
             bounds[0] = std::min(bounds[0], block.get(ii, jj, kk)[r]);
@@ -1270,7 +1307,15 @@ bool SPGridTopologyOptimization3D::fem_solve(
         }
       }
     }
+    block_num ++;
   }
+
+  if(save_dis){
+    std::fclose(file); // close file
+  }
+
+
+
   TC_MEMORY_USAGE("Displacements fetched");
   TC_P(bounds);
   TC_WARN_UNLESS(interface.outputs.success, "FEM solve has failed!");

@@ -33,8 +33,6 @@ class App(npyscreen.NPSApp):
         self.exit_kwargs = ()
         self.exit = False
 
-
-
     def main(self):
         self.io_update_thread.start()
         while not self.exit:
@@ -49,7 +47,7 @@ class App(npyscreen.NPSApp):
                     # get data
                     data = self.GenEditForm(self.StartNewSolverForm)
                     # process data
-                    cancel = data[3].value
+                    cancel = True if data[3].value is not None else False
                     if cancel:
                         continue
                     fn = data[0].value
@@ -64,48 +62,69 @@ class App(npyscreen.NPSApp):
                     if nohup:
                         ExecPy(fn, nohup=nohup)  # exec py with nohup
                     else:  # exit helper and run
-                        self.exit_task = ExecPy
-                        self.exit_kwargs = (fn, nohup)
+                        #self.exit_task = ExecPy
+                        #self.exit_kwargs = (fn, False)
+                        #self.exit = True
+                        self.exit_task = OsSys
+                        self.exit_kwargs = (f"cd {SCRIPT_DIR} && python3 {fn}", "place holder")
                         self.exit = True
+                        self.output = f"cd {SCRIPT_DIR} && python3 {fn}"
+
                 # ======================================================================================================
                 elif idx == 1:
-                    solver,all_solvers = self.Handle_SelectSolver_Running()
+                    # stop solver
+                    solver, all_solvers = self.Handle_SelectSolver_Running()
                     if solver:
                         solver.kill()
                         all_solvers.WriteToDisk(update=True)
 
 
                 # ======================================================================================================
-                elif idx == 2:
-                    # process data
-                    solver = self.Handle_SelectSolver()
-                    if solver:
-                        self.Handle_ProcessDataForm(solver=solver)
+                # elif idx == 2:
+                #     # process data
+                #     solver = self.Handle_SelectSolver()
+                #     if solver:
+                #         self.Handle_ProcessDataForm(solver=solver)
 
                 # ======================================================================================================
-                elif idx == 3:
+                elif idx == 2:
                     # Manage Solvers
                     solver = self.Handle_SelectSolver()
                     if solver:
                         self.Handle_ManageSolver(solver)
 
-                elif idx == 4:
-                    # clean memory
-                    ms = self.GenEditForm(self.SelectProgramTypeForm)
-                    clean = False if ms[1].value is None else True
-                    cancel = False if ms[2].value is None else True
-                    if clean:
-                        target_idx = ms[0].value
-                        for idx in target_idx:
-                            pn = CLEAN_TARGETS[idx]
-                            KillProgramByName(pn)
+                elif idx == 3:
+                    # Tools
 
-                elif idx == 5:
-                    # view output
+                    idx2 = self.GenSelectForm(self.SelectToolForm)
+                    print(f"idx2 = {idx2}")
+                    if idx2 == 0:
+                        # sys info
+                        self.GetCPUTemp()
+                    elif idx2 == 1:
+                        # clean memory
+                        ms = self.GenEditForm(self.SelectProgramTypeForm)
+                        clean = False if ms[1].value is None else True
+                        cancel = False if ms[2].value is None else True
+                        if clean:
+                            target_idx = ms[0].value
+                            for idx in target_idx:
+                                pn = CLEAN_TARGETS[idx]
+                                KillProgramByName(pn)
+                    elif idx2 == 2:
+                        # limit cpu
+                        self.Handle_LimitCPU()
+                    else:
+                        #back to menu
+                        continue
+                elif idx == 4:
+                    # std out
                     F = npyscreen.Form(name="action form", ALLOW_RESIZE=True, width=40, height=30)
                     self.strio_gui = F.add(npyscreen.TitlePager, values=self.get_strio())
                     F.edit()
                     continue
+                elif idx == 5:
+                    break
                 else:
                     break
 
@@ -144,9 +163,9 @@ class App(npyscreen.NPSApp):
         return F
 
     def MainMenu(self):
-        F = npyscreen.Form(name=f"Welcome, select a function version:{self.version}")
-        items = ["1. Start a new solver", "2. Stop solver", "3. Process Data", "4. Manage Solvers", "5. Clean Memory",
-                 "6. StdOut"]
+        F = npyscreen.FormBaseNew(name=f"Welcome, select a function version:{self.version}")
+        items = ["1. Start a new solver", "2. Stop solver", "3. Manage Solvers", "4. Tools",
+                 "5. Std Out", "Exit"]
         self.ms_list = []
         for i in items:
             ms = F.add(npyscreen.ButtonPress, max_height=6, name=i,
@@ -165,6 +184,8 @@ class App(npyscreen.NPSApp):
         for solver in solvers:
             info.append(f"{count} {solver.briefInfo(limit=50)}")
             count += 1
+            if count > 15:
+                break
         self.ms_list = []
         for i in info:
             ms = F.add(npyscreen.ButtonPress, max_y=30, name=i,
@@ -211,8 +232,6 @@ class App(npyscreen.NPSApp):
             else:
                 fns_r[-1].append(" " + str(fns[i]))
 
-
-
         # 选择如何处理数据
         F = npyscreen.FormBaseNew(name="ProcessData")
         self.ms_list = []
@@ -242,37 +261,43 @@ class App(npyscreen.NPSApp):
         tcbs = ListFiles(fem_path, reverse=False, end=".tcb", sort_type="name")
         txts = ListFiles(fem_path, reverse=False, end=".txt", sort_type="name")
         plys = ListFiles(fem_path, reverse=False, end=".ply", sort_type="name")
-        header = f".tcb.zip: {len(tcb_zips)} .tcb: {len(tcbs)} .txt: {len(txts)} .ply {len(plys)}"
+        ply_zips = ListFiles(fem_path, reverse=False, end=".ply.zip", sort_type="name")
 
-        showing_file_list =[]
-        size_list = []
-        gap = int(len(tcb_zips) / 15.0)
-        if gap < 1:
-            gap = 1
-        for i in range(len(tcb_zips)):
-            if i % gap != 0 and i != len(tcb_zips) - 1:
-                continue
-            fn = tcb_zips[i]
-            showing_file_list.append(fn)
+        header = f".tcb.zip: {SafeLen(tcb_zips)} .tcb: {SafeLen(tcbs)} .txt: {SafeLen(txts)} .ply {SafeLen(plys)} .ply.zip {SafeLen(ply_zips)}"
 
-        for fn in showing_file_list:
-            file_size = os.path.getsize(os.path.join(fem_path, fn)) / 1024
-            size_list.append(file_size)
-        sorted_file_size = sorted(size_list)
-        min = sorted_file_size[0]
-        max = sorted_file_size[-1]
         size_info = []
-        for i in range(len(showing_file_list)):
-            file_size = size_list[i]
-            c = int(file_size / max * 50)
-            line = f"{showing_file_list[i]}: |"
-            for i in range(c):
-                line += "#"
-            for i in range(50-c):
-                line += "-"
-            line += f"| {round(file_size / 1024, 2)}MiB"
-            size_info.append(line)
-        size_info.reverse()
+        if SafeLen(tcb_zips) != 0:
+            showing_file_list = []
+            size_list = []
+            gap = int(SafeLen(tcb_zips) / 15.0)
+            if gap < 1:
+                gap = 1
+            for i in range(SafeLen(tcb_zips)):
+                if i % gap != 0 and i != SafeLen(tcb_zips) - 1:
+                    continue
+                fn = tcb_zips[i]
+                showing_file_list.append(fn)
+
+            for fn in showing_file_list:
+                file_size = os.path.getsize(os.path.join(fem_path, fn)) / 1024
+                size_list.append(file_size)
+            sorted_file_size = sorted(size_list)
+            min = sorted_file_size[0]
+            max = sorted_file_size[-1]
+            size_info = []
+            for i in range(SafeLen(showing_file_list)):
+                file_size = size_list[i]
+                c = int(file_size / max * 50)
+                line = f"{showing_file_list[i]}: |"
+                for i in range(c):
+                    line += "#"
+                for i in range(50 - c):
+                    line += "-"
+                line += f"| {round(file_size / 1024, 2)}MiB"
+                size_info.append(line)
+            size_info.reverse()
+        else:
+            size_info = ["no data"]
         # 选择如何处理数据
         F = npyscreen.FormBaseNew(name="Select a Function")
         self.ms_list = []
@@ -294,8 +319,8 @@ class App(npyscreen.NPSApp):
         self.ms_list = []
         F = npyscreen.FormBaseNew(name="", )
 
-        self.ms_list.append(F.add(npyscreen.TitleMultiSelect, max_height=3, value=[ ], name="Pick Several",
-                    values=CLEAN_TARGETS, scroll_exit=F))
+        self.ms_list.append(F.add(npyscreen.TitleMultiSelect, max_height=3, value=[], name="Pick Several",
+                                  values=CLEAN_TARGETS, scroll_exit=F))
         self.ms_list.append(F.add(npyscreen.ButtonPress, name="Clean",
                                   scroll_exit=True, when_pressed_function=self.exit_func))
         self.ms_list.append(F.add(npyscreen.ButtonPress, name="Cancel",
@@ -303,6 +328,7 @@ class App(npyscreen.NPSApp):
         self.strio_gui = None
         F.DISPLAY()
         return F
+
     def YesNoForm(self):
         F = npyscreen.FormBaseNew(name="")
         self.ms_list = []
@@ -314,6 +340,36 @@ class App(npyscreen.NPSApp):
         self.strio_gui = None
         F.DISPLAY()
         return F
+
+    def SelectToolForm(self):
+        F = npyscreen.FormBaseNew(name="Select a tool")
+        self.ms_list = []
+        self.ms_list.append(F.add(npyscreen.ButtonPress, name="SysInfo",
+                                  scroll_exit=True, when_pressed_function=self.exit_idx))
+        self.ms_list.append(F.add(npyscreen.ButtonPress, name="CleanMemory",
+                                  scroll_exit=True, when_pressed_function=self.exit_idx))
+        self.ms_list.append(F.add(npyscreen.ButtonPress, name="LimitCPU",
+                                  scroll_exit=True, when_pressed_function=self.exit_idx))
+        self.ms_list.append(F.add(npyscreen.ButtonPress, name="Back",
+                                  scroll_exit=True, when_pressed_function=self.exit_idx))
+        self.strio_gui = None
+        F.DISPLAY()
+        return F
+
+    def LimitCPUForm(self):
+        F = npyscreen.FormBaseNew(name="")
+        self.ms_list = []
+        self.ms_list.append(F.add(npyscreen.TitleText, name="target usage:"))
+        self.ms_list.append(F.add(npyscreen.ButtonPress, name="lock",
+                                  scroll_exit=True, when_pressed_function=self.exit_func))
+        self.ms_list.append(F.add(npyscreen.ButtonPress, name="unlock",
+                                  scroll_exit=True, when_pressed_function=self.exit_func))
+        self.ms_list.append(F.add(npyscreen.ButtonPress, name="cancel",
+                                  scroll_exit=True, when_pressed_function=self.exit_func))
+        self.strio_gui = None
+        F.DISPLAY()
+        return F
+
 
     def exit_idx(self):
         self.ms_idx = -1
@@ -359,8 +415,7 @@ class App(npyscreen.NPSApp):
         self.task_status = {}
         self.task_progress = {}
 
-
-    def Handle_ProcessDataForm(self,solver):
+    def Handle_ProcessDataForm(self, solver):
         ms = self.GenEditForm(self.ProcessDataForm, solver=solver)
         fem_path = os.path.join(solver.working_dir, "fem")
         target = ms[0].value[0]
@@ -369,9 +424,9 @@ class App(npyscreen.NPSApp):
         thread_num = int(ms[3].value)
         next = False if ms[4].value is None else True
         nohup = False if ms[5].value is None else True
-        cancle = False if ms[6].value is None else True
+        cancel = False if ms[6].value is None else True
         # break condition
-        if cancle or not next:
+        if cancel or not next:
             print("user cancel")
             return
 
@@ -379,6 +434,7 @@ class App(npyscreen.NPSApp):
         selected_files = []
         print(fem_path)
         all_files = ListFiles(fem_path, False, end=".tcb.zip", sort_type='name')
+        gap = 1
         if file_mode == 0:
             # all files
             selected_files = all_files
@@ -389,6 +445,7 @@ class App(npyscreen.NPSApp):
             f = r_all_files[0]
             selected_files = [f]
         elif file_mode == 2:
+
             if custom_idx_str == "":
                 print("[error] plese type in custom idx")
                 return
@@ -409,6 +466,11 @@ class App(npyscreen.NPSApp):
                         files_to_add = all_files[start:end]
                         for f in files_to_add:
                             selected_files.append(f)
+                    elif "gap=" in part:
+                        parts = part.split("=")
+                        if len(parts) > 1:
+                            gap = int(parts[1])
+
                     else:
                         if part == "start":
                             part = "0"
@@ -421,6 +483,15 @@ class App(npyscreen.NPSApp):
                 return
         assert len(selected_files) > 0
 
+        # 应用gap
+
+
+        _selected_files = selected_files.copy()
+        selected_files = []
+        for i in range(len(_selected_files)):
+            if i % gap == 0:
+                selected_files.append(_selected_files[i])
+
         # 根据thread分配文件
         selected_files_dict = {}
         for i in range(len(selected_files)):
@@ -430,10 +501,11 @@ class App(npyscreen.NPSApp):
             else:
                 selected_files_dict[block].append(selected_files[i])
         print(selected_files_dict)
+
         if not nohup:
             # 清空任务
-            self.exit_task = []
-            self.exit_kwargs = []
+            # self.exit_task = []
+            # self.exit_kwargs = []
             self.stop_all_tasks()  # 停止所有任务
         for block in selected_files_dict:
             # 分区快其中任务
@@ -469,7 +541,7 @@ class App(npyscreen.NPSApp):
         idx2 = self.GenSelectForm(self.SelectSolver, solvers=running_solvers)
         if idx2 == -1:
             print("user cancel")
-            return None,None
+            return None, None
         else:
             solver = running_solvers[idx2]
             return solver, all_solvers
@@ -485,16 +557,80 @@ class App(npyscreen.NPSApp):
         if delete:
             idx3 = self.GenSelectForm(self.YesNoForm)
             print(f"idx3: {idx3}")
+
             if idx3 == 0:
                 # yes
-                ExecCmd(f"rm {solver.working_dir}")
+                out = ExecCmd(f"rm -r {solver.working_dir}/")
                 print(f"{solver.working_dir} removed!")
 
             else:
                 self.Handle_ManageSolver(solver)
         elif process:
             self.Handle_ProcessDataForm(solver)
+    def Handle_LimitCPU(self):
+        ms = self.GenEditForm(self.LimitCPUForm)
+        cpu_limit = ms[0].value
 
+        lock = True if ms[1].value is not None else False
+        unlock = True if ms[2].value is not None else False
+        cancel = True if ms[3].value is not None else False
+
+        if cancel:
+            print("user cancel")
+            return
+        if lock:
+            try:
+                cpu_limit = int(cpu_limit)
+            except Exception as e:
+                print(e)
+                return
+            ps = PS()
+            running_solvers = ps.GetRunningSolvers()
+            names = []
+            for solver in running_solvers:
+                names.append(solver.name)
+            if len(names) >= 1:
+                name = names[0]
+            else:
+                print("no solver running")
+                return
+            programIsRunningCmd = "ps -ef|grep " + name + "|grep -v grep|awk '{print $2}'"
+            programIsRunningCmdAns = ExecCmd(programIsRunningCmd)
+            ansLine = programIsRunningCmdAns.split('\n')
+            pids = []
+            if len(ansLine) >= 2:
+                print(f"{len(ansLine) - 1} running {name} found")
+                for l in range(len(ansLine) - 1):
+                    pid = ansLine[l]
+                    pids.append(ansLine[l])
+                    cmd = f"nohup cpulimit -p {pid} -l {cpu_limit} &"
+                    print(cmd)
+                    OsSys(cmd, "")
+            else:
+                print(f"no running {name} found")
+        elif unlock:
+            KillProgramByName("cpulimit")
+
+    def GetCPUTemp(self):
+        output = ExecCmd("sensors")
+        #print(output)
+        lines = output.split("\n")
+        for line in lines:
+            if "Core" in line:
+                parts1 = line.split(":")
+                if len(parts1) <= 1:
+                    continue
+                core = parts1[0]
+                #print(f"core = {core}")
+                part2 = parts1[1]
+                if "°" in part2:
+                    parts2 = part2.split("°")
+                    temp = parts2[0].strip()
+                    temp = temp.replace("+","")
+
+                    #print(f"temp = {temp}")
+                    print(f"{core}: {temp}°C" ,end="\n")
+        print("\n")
 
 class IO_Update(threading.Thread):
     def __init__(self, app):
@@ -604,11 +740,14 @@ def ExecCmd(cmd: str, print_out: bool = False):
     return out
 
 
-def OsSys(cmd: str):
+def OsSys(cmd: str, placeholder):
+    print(placeholder)
     os.system(cmd)
 
 
 def StrKwargs(kwargs):
+    if kwargs is None:
+        return ""
     kwargs = dict(kwargs)
     sufix = ""
     for key in kwargs:
@@ -651,7 +790,6 @@ def KillProgram(PIDS):
 
 
 def KillProgramByName(name):
-
     programIsRunningCmd = "ps -ef|grep " + name + "|grep -v grep|awk '{print $2}'"
     programIsRunningCmdAns = ExecCmd(programIsRunningCmd)
     ansLine = programIsRunningCmdAns.split('\n')
@@ -725,6 +863,13 @@ def AbbreviateContent(text: str, limit=50):
     brief_str = f"{text[0:int(limit / 2) - 1]}...{text[-int(limit / 2) + 1:-1] + text[-1]}" if len(
         text) > limit else text
     return brief_str
+
+
+def SafeLen(obj):
+    if obj is None:
+        return 0
+    else:
+        return len(obj)
 
 
 class P:
@@ -814,7 +959,7 @@ class PS:
         if write_to_disk:
             self.WriteToDisk()
 
-    def WriteToDisk(self, limit=10, update=True):
+    def WriteToDisk(self, limit=100, update=True):
         l = limit if self.__solvers__.__len__() > limit else self.__solvers__.__len__()
         valid_solvers = self.__solvers__.copy()
         valid_solvers.reverse()

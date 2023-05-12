@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="74342dbe-a25e-4894-9ed0-fddbd8543992" name="OMEN">
+        <fileTransfer accessType="SFTP" host="10.192.32.26" port="36850" sshConfigId="ed82c78b-d814-47b5-ba31-5ecd88f32d93" sshConfig="root@10.192.32.26:36850 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

@@ -1,6 +1,8 @@
 import sys
 import os
 import shutil
+import time
+
 from taichi.dynamics import Simulation
 
 import taichi.core as tc_core
@@ -53,12 +55,17 @@ class TopoOpt(Simulation):
         self.task_id = get_unique_task_id()
         self.suffix = suffix + kwargs.get('suffix', '')
 
-        self.working_directory = os.path.join(tc.get_output_directory(), 'topo_opt', self.script_name,
-                                              self.task_id + '_' + self.suffix)
-        '''my code'''
+        custom_name = kwargs.get('custom_name', '')
+        if custom_name != "":
+            custom_name = custom_name.replace(" ", "_")
+            self.working_directory = os.path.join(tc.get_output_directory(),'topo_opt', self.script_name, custom_name)
+        else:
+            self.working_directory = os.path.join(tc.get_output_directory(), 'topo_opt', self.script_name,
+                                                  self.task_id + '_' + self.suffix)
+        '''================================================my code================================================'''
         with open("/hy-tmp/taichi/projects/spgrid/scripts/utils/ps.txt", "a", encoding='utf-8') as f:
             f.write(f",{self.working_directory}")
-        '''my code'''
+        '''================================================my code================================================'''
         kwargs['working_directory'] = self.working_directory
         self.snapshot_directory = os.path.join(self.working_directory, 'snapshots')
         self.fem_directory = os.path.join(self.working_directory, 'fem')
@@ -153,7 +160,10 @@ class TopoOpt(Simulation):
                 if r < 5e-3:
                     tc.trace("*************** Should stop now,  Final objective: {}", objectives[-1])
             # print("debug, exiting")
-            # break
+            # # break
+            # for j in range(5):
+            #     print("waiting for temp")
+            #     time.sleep(1)
 
         blklog.close()
 

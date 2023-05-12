@@ -14,3 +14,8 @@ topopt2d
 *.tcb.*
 *.so
 .hg
+*.bgeo.sc
+*.ply
+*.npy
+*.ply.zip
+*.out
