@@ -1,10 +1,8 @@
 import datetime
 import threading
 import tkinter as tk
-import os
 import ttkbootstrap as ttk
 from tkinter import filedialog
-import importlib
 from tqdm import tqdm
 import configparser
 from auto_download import *
@@ -14,19 +12,9 @@ from PIL import ImageTk, Image
 import zipfile
 import numpy as np
 import polyscope as ps
-# generating random 3D Points
 import customGUI
+import atexit
 
-# # 远程文件路径（需要绝对路径）
-# remote_dir = r'/hy-tmp/taichi/outputs/topo_opt/'
-# # 本地文件存放路径（绝对路径或者相对路径都可以）
-# local_dir = r'D:\M.Arch\2023Spr\DesignClass_ComputationalDesignandHigh-performance3DPrintingConstruction\Spgrid_topo_opt\outputs'
-#
-# # 服务器SSH信息（OMEN）
-# host_name = '10.192.32.26'
-# user_name = 'root'
-# password = 'VQ*D?>fdb}u#,truQ]u+LYZx.0c_3~F2wvdeAAjHw:9TQ4rBxf>aaUt-+_jP!!XUpAgs#kD8bAj9ng*~UB>v!L75}GMxkpPaxQ~*'
-# port = 36850
 config = configparser.ConfigParser()
 config.read('./config.ini')
 host_name = config.get('Server', 'host_name')
@@ -41,11 +29,12 @@ class Application(ttk.Frame):
 
     def __init__(self, master=None):
         super().__init__(master)
+        self.image = None
         self.master = master
         self.grid()
         self.create_widgets()
 
-        self.columnconfigure(0, minsize=120)
+        self.columnconfigure(0, minsize=180)
 
         self.columnconfigure(1, minsize=320)
         self.columnconfigure(2, minsize=100)
@@ -149,29 +138,23 @@ class Application(ttk.Frame):
         self.output_text.insert("end", "solvers列表已更新\n")
         self.output_text.yview_moveto(1.0)
 
-    # 定义一个回调函数，用于处理列表项被选中时的事件
-
     def on_listbox_select(self, event):
-        # 获取当前选中项的下标
         if len(event.widget.curselection()) == 0:
             return
-        index = event.widget.curselection()[0]
-        # # 获取当前选中项的文本
-        # value = event.widget.get(index)
-        # # 在控制台输出选中项的文本
-        # print(f'你选择了：{value}')
         self.sync_with_server()
 
-    def sync_with_server(self):
+    def sync_with_server(self, showInfo=True):
         # 获得与服务器不同的文件
         global client
         if client is None:
-            messagebox.showinfo("Information", "PLEASE CONNECT SERVER FIRST")
+            if showInfo:
+                messagebox.showinfo("Information", "PLEASE CONNECT SERVER FIRST")
             return
         if len(self.listbox.curselection()) > 0:
             c = self.listbox.curselection()[0]
         else:
-            messagebox.showinfo("Information", "Please select a solver")
+            if showInfo:
+                messagebox.showinfo("Information", "Please select a solver")
             return
         global remote_task_path_list, remote_task_path_list, remote_task_path, local_task_path, remote_fem_path, local_fem_path
 
@@ -184,16 +167,9 @@ class Application(ttk.Frame):
 
         remote_fem_path = os.path.join(remote_task_path, "fem")
         local_fem_path = os.path.join(local_task_path, "fem")
-        # print(f"remote_fem_path: {remote_fem_path}")
-        # print(f"local_fem_path: {local_fem_path}")
-
-        # self.output_text.insert("end", f"remote_fem_path {remote_fem_path}")
-        # self.output_text.insert("end", f"local_fem_path {local_fem_path}")
-        # self.output_text.yview_moveto(1.0)
-        # self.update()
 
         end = ".ply.zip"
-        file_gap = 1
+
         start_idx = 0
 
         if not os.path.exists(local_fem_path):
@@ -208,36 +184,17 @@ class Application(ttk.Frame):
 
         print(f"remote_files: {remote_files}")
         print("===============sync from remote============")
-        # self.output_text.insert("end", f"remote_files: {remote_files}")
-        # self.output_text.yview_moveto(1.0)
-        # self.update()
 
         local_files_n = remove_end(local_files)
         remote_files_n = remove_end(remote_files)
 
         global diff_files_n
         diff_files_n = []
-        if file_gap == -1:
-            last_r_file = -1
-            idx = 0
-            last_r_file_idx = -1
-            for r_file in remote_files_n:
-                if int(r_file) > last_r_file:
-                    last_r_file = int(r_file)
-                    last_r_file_idx = idx
-                    idx += 1
-            if last_r_file_idx != -1 and remote_files_n[last_r_file_idx] not in local_files_n:
-                # print(f"last_r_file: {last_r_file} idx : {last_r_file_idx}")
-                diff_files_n = [remote_files_n[last_r_file_idx]]
-        else:
-            for r_file in remote_files_n:
-                if r_file not in local_files_n and int(r_file) % file_gap == 0 and int(r_file) >= start_idx:
-                    diff_files_n.append(r_file)
+        for r_file in remote_files_n:
+            if r_file not in local_files_n and int(r_file) % 1 == 0 and int(r_file) >= start_idx:
+                diff_files_n.append(r_file)
 
         print(f"diff_files_n: {diff_files_n}")
-        # self.output_text.insert("end", f"diff_files_n: {diff_files_n}")
-        # self.output_text.yview_moveto(1.0)
-        # self.update()
 
         self.listbox2.delete(0, tk.END)
         for n in diff_files_n:
@@ -247,8 +204,6 @@ class Application(ttk.Frame):
             self.button4['state'] = 'disabled'
         else:
             self.button4['state'] = 'normal'
-        # self.output_text.yview_moveto(1.0)
-        # self.update()
 
     def download_from_server(self):
         global client, client_sftp
@@ -268,15 +223,6 @@ class Application(ttk.Frame):
             selected_files = [diff_files_n[i] for i in self.listbox2.curselection()]
 
         os.makedirs(local_fem_path, exist_ok=True)
-        # end = ".ply.zip"
-        # count  = 0
-        # self.progressbar['maximum'] = len(selected_files)
-        # for file_n in selected_files:
-        #     count += 1
-        #     self.progressbar['value'] = count
-        #     print(f"downloading from {remote_fem_path + '/' + file_n + end}")
-        #     down_from_remote(client_sftp, remote_fem_path + '/' + file_n + end,
-        #                      local_fem_path + '/' + file_n + end,callback=download_callback)
         download_thread = DownloadThread(self, selected_files)
         download_thread.start()
 
@@ -295,18 +241,6 @@ class Application(ttk.Frame):
             self.output_text.yview_moveto(1.0)
 
     def open_folder(self):
-        # # 打开文件夹对话框
-        # folder_path = filedialog.askdirectory()
-        #
-        # # 更新列表框
-        # self.listbox.delete(0, ttk.END)
-        # for file_name in os.listdir(folder_path):
-        #     self.listbox.insert(ttk.END, file_name)
-        #
-        # # 更新进度条
-        # self.progressbar["value"] = 0
-        # self.progressbar["maximum"] = len(os.listdir(folder_path))
-        # self.master.after(1000, lambda: self.update_progress(folder_path))
         global local_fem_path
         if local_fem_path == "":
             return
@@ -317,14 +251,12 @@ class Application(ttk.Frame):
             return
 
     def update_progress(self, folder_path):
-        # 更新进度条
         num_files = len(os.listdir(folder_path))
         if self.progressbar["value"] < num_files:
             self.progressbar["value"] += 1
             self.master.after(1000, lambda: self.update_progress(folder_path))
 
     def open_window(self):
-        # 创建一个Toplevel对象，即子窗口
         global local_fem_path
         self.window_local_fem_path = local_fem_path
         if local_fem_path == "":
@@ -337,14 +269,16 @@ class Application(ttk.Frame):
         self.window.grid()
 
         button_width = 10
-        button_height = 10
         path = self.window_local_fem_path
         if len(path) > 104:
             path = "..." + path[-100:-1] + path[-1]
 
+        # title (file path)
         self.sub_label1 = ttk.Label(self.window, text=path)
         self.sub_label1.grid(row=0, column=0, pady=5, columnspan=4, sticky="nsew")
 
+        # ==========================================LEFT===================================================
+        # buttons
         self.sub_button1 = ttk.Button(self.window, text="解压", command=self.unzip_all, width=button_width,
                                       state='disabled')
         self.sub_button1.grid(row=1, column=0, columnspan=2, pady=5, sticky="nsew")
@@ -369,84 +303,87 @@ class Application(ttk.Frame):
                                       width=button_width)
         self.sub_button6.grid(row=6, column=0, pady=5, columnspan=2, sticky="nsew")
 
+        # --------------------------------settings---------------------------------------
+        # point size
         temp_label = ttk.Label(self.window, text="point size")
         temp_label.grid(row=7, column=0, pady=5, sticky="nsew")
-
-        self.entry = tk.Entry(self.window)
-        self.entry.grid(row=7, column=1, pady=5, sticky="nsew")
+        self.entry_pointSize = tk.Entry(self.window)
+        self.entry_pointSize.grid(row=7, column=1, pady=5, sticky="nsew")
         default_point_size = config.get('Polyscope', 'point_size')
-        self.entry.insert(0, default_point_size)
+        self.entry_pointSize.insert(0, default_point_size)
 
+        # use cache
         self.var_use_cache = tk.BooleanVar()
         default_use_cache = config.getint('Polyscope', 'use_cache')
         self.var_use_cache.set(True if default_use_cache == 1 else False)
         self.checkbutton_use_cache = tk.Checkbutton(self.window, text="use_cache", variable=self.var_use_cache)
         self.checkbutton_use_cache.grid(row=8, column=0, pady=5, sticky="nsew")
 
+        # save cache
         self.var_save_cache = tk.BooleanVar()
         default_save_cache = config.getint('Polyscope', 'save_cache')
         self.var_save_cache.set(True if default_save_cache == 1 else False)
         self.checkbutton_save_cache = tk.Checkbutton(self.window, text="save_cache", variable=self.var_save_cache)
         self.checkbutton_save_cache.grid(row=8, column=1, pady=5, sticky="nsew")
 
+        # zoom factor
         temp_label = ttk.Label(self.window, text="zoom factor")
         temp_label.grid(row=9, column=0, pady=5, sticky="nsew")
-
         self.entry_zoom = tk.Entry(self.window)
         self.entry_zoom.grid(row=9, column=1, pady=5, sticky="nsew")
         zoom_factor = config.get('Polyscope', 'zoom_factor')
         self.entry_zoom.insert(0, zoom_factor)
 
+        # z factor
         temp_label = ttk.Label(self.window, text="z factor")
         temp_label.grid(row=10, column=0, pady=5, sticky="nsew")
-
         self.entry_z = tk.Entry(self.window)
         self.entry_z.grid(row=10, column=1, pady=5, sticky="nsew")
         z_factor = config.get('Polyscope', 'z_factor')
         self.entry_z.insert(0, z_factor)
 
+        # mirror
         temp_label = ttk.Label(self.window, text="mirror")
         temp_label.grid(row=11, column=0, pady=5, sticky="nsew")
-
         self.entry_mirror = tk.Entry(self.window)
         self.entry_mirror.grid(row=11, column=1, pady=5, sticky="nsew")
         mirror = config.get('Polyscope', 'mirror')
         self.entry_mirror.insert(0, mirror)
 
+        # density threshold
         temp_label = ttk.Label(self.window, text="DensThresh")
         temp_label.grid(row=12, column=0, pady=5, sticky="nsew")
-
         self.entry_densThresh = tk.Entry(self.window)
         self.entry_densThresh.grid(row=12, column=1, pady=5, sticky="nsew")
         densThresh = config.get('Polyscope', 'densThresh')
         self.entry_densThresh.insert(0, densThresh)
 
+        # save config
         self.sub_button_save = ttk.Button(self.window, text="保存配置", command=self.save_config, state='normal',
                                           width=button_width)
         self.sub_button_save.grid(row=13, column=0, pady=5, columnspan=2, sticky="nsew")
 
+        # --------------------------------settings end---------------------------------------
+        # blank
         temp_label_placement = ttk.Label(self.window, text="")
         temp_label_placement.grid(row=14, column=0, pady=20, columnspan=2, sticky="nsew")
+
+        # ==========================================LEFT END===================================================
 
         # 创建文件列表框
         self.listbox3 = tk.Listbox(self.window, selectmode=tk.EXTENDED)
         self.listbox3.grid(row=1, column=2, rowspan=13, pady=5, padx=5, sticky="nsew")
-
-        # 绑定Listbox的选中事件到回调函数上
         self.listbox3.bind('<<ListboxSelect>>', self.on_listbox3_select)
 
         self.image = Image.open('./test.png')
-        # 将图片转换为Tkinter可用的图像格式
         self.tk_image = ImageTk.PhotoImage(self.image)
-
-        # 创建一个Label控件，显示图片
         self.image_label = tk.Label(self.window, image=self.tk_image, width=600, height=400)
         self.image_label.grid(row=1, column=3, rowspan=13, pady=5, padx=5, sticky="nsew")
 
         self.update_listbox3()
 
     def save_config(self):
-        config.set('Polyscope', 'point_size', self.entry.get())
+        config.set('Polyscope', 'point_size', self.entry_pointSize.get())
         config.set('Polyscope', 'use_cache', '1' if self.var_use_cache.get() else '0')
         config.set('Polyscope', 'save_cache', '1' if self.var_save_cache.get() else '0')
         config.set('Polyscope', 'zoom_factor', self.entry_zoom.get())
@@ -515,6 +452,7 @@ class Application(ttk.Frame):
         self.update_listbox3()
 
     def clean_npy(self):
+        # clean npy file
         if len(self.listbox3.curselection()) == 0:
             npys = get_file_list(self.window_local_fem_path, end='.npy')
         else:
@@ -526,15 +464,37 @@ class Application(ttk.Frame):
         self.update_listbox3()
 
     def general_action_for_polyscope(self, save_png=True, show=False, use_cache=True, save_cache=True):
+        """
+        some general actions for polyscope stuff, like open window or save snapshot
+        :param save_png: whether to save snapshot
+        :param show: whether to show in new window
+        :param use_cache: whether to use cache
+        :param save_cache: whether to save cache
+        """
+        # error check
         if len(self.listbox3.curselection()) == 0:
             return
         if len(self.listbox3.curselection()) > 1 and show:
             messagebox.showinfo("Information", "仅支持单选时打开")
             return
 
+        self.init_polyscope()
+
+        # copy current selection
+        current_selection_indexes = list(self.listbox3.curselection()).copy()
+        current_selection_names = [self.listbox3.get(i) for i in current_selection_indexes]
+
+        # loop for each selection
+        for name in current_selection_names:
+            self.process_single_ply(name, save_png, show, use_cache, save_cache)  # process ply
+        self.update_listbox3()  # update listbox after all Done
+
+    def init_polyscope(self):
         global has_ps
         if not has_ps:
-            ps.set_program_name("spgrid preview")
+            # check if polyscope(ps) has already initialized
+            # if not, initialize polyscope
+            ps.set_program_name("SPgrid Preview")
             ps.set_autocenter_structures(True)
             ps.set_autoscale_structures(True)
             ps.set_user_callback(customGUI.callback)
@@ -542,25 +502,32 @@ class Application(ttk.Frame):
             ps.set_ground_plane_mode('none')
 
             ps.init()
-            print("ps init")
+            print("ps initialized")
             has_ps = True
-        idxs = list(self.listbox3.curselection()).copy()
-        names = [self.listbox3.get(i) for i in idxs]
-        for name in names:
-            # name:str = self.listbox3.get(idx)
-            self.process_single_ply(name, save_png, show, use_cache, save_cache)
-        self.update_listbox3()
 
-    def process_single_ply(self, name:str, save_png:bool, show:bool, use_cache:bool, save_cache:bool) -> None:
-        name = name.split("|")[0].strip()
-        _local_fem_path = self.window_local_fem_path
+    def process_single_ply(self, name: str, save_png: bool, show: bool, use_cache: bool, save_cache: bool) -> None:
+        """
+        process a single ply file
+        :param name: file nmae
+        :param save_png: whether to save snapshot
+        :param show: whether to show in new window
+        :param use_cache: whether to use cache
+        :param save_cache: whether to save cache
+        :return:
+        """
+        name = name.split("|")[0].strip() # get pure name like 00010
+        _local_fem_path = self.window_local_fem_path #
         print(f"name = {name}")
+
+        # if cache not exist or not use cache, and no ply file found, unzip ply.zip
         if (not os.path.exists(os.path.join(_local_fem_path, f"{name}.npy"))) or not use_cache:
             if not os.path.exists(os.path.join(_local_fem_path, f"{name}.ply")):
                 zip_file = zipfile.ZipFile(os.path.join(_local_fem_path, f"{name}.ply.zip"))
                 for file in zip_file.namelist():
                     zip_file.extract(file, _local_fem_path)  # 解压位置
                 zip_file.close()
+
+        # get ply path
         path = os.path.join(_local_fem_path, f"{name}.ply")
 
         # load points
@@ -575,6 +542,7 @@ class Application(ttk.Frame):
             densThresh = 0.05
         points: np.array = points[points[:, 3] > densThresh]  # density threshold
         print(f"points.shape {points.shape}")
+
         # get bounds
         max_x = np.max(points[:, 0])
         max_y = np.max(points[:, 1])
@@ -583,6 +551,9 @@ class Application(ttk.Frame):
         min_y = np.min(points[:, 1])
         min_z = np.min(points[:, 2])
         print(f"bound x:{min_x}~{max_x}, y:{min_y}~{max_y}, z:{min_z}~{max_z}")
+
+        # process mirror behaviour
+        # get rid of side points
         mirror = self.entry_mirror.get()
         if 'x' in mirror:
             points = points[points[:, 0] < max_x]
@@ -601,37 +572,45 @@ class Application(ttk.Frame):
             points = np.hstack((points, dis[:, np.newaxis]))
             min_dis = round(np.min(points[:, 7]), 3)
             max_dis = round(np.max(points[:, 7]), 3)
+
+        # update custom GUI
+        if has_dis:
             customGUI.min_dis = min_dis
             customGUI.max_dis = max_dis
             print(f"min_dis: {min_dis}, max_dis: {max_dis}")
+        else:
+            customGUI.min_dis = 0
+            customGUI.max_dis = 0
 
         if 'x' in mirror:
             x_mirror = points.copy()
-            x_mirror[:, 0] = 2 * max_x - points[:, 0]
+            x_mirror[:, 0] = 2 * max_x - 1 - points[:, 0]
             points = np.vstack((points, x_mirror))
         if 'y' in mirror:
             y_mirror = points.copy()
-            y_mirror[:, 1] = 2 * max_y - points[:, 1]
+            y_mirror[:, 1] = 2 * max_y - 1 - points[:, 1]
             points = np.vstack((points, y_mirror))
         if 'z' in mirror:
             z_mirror = points.copy()
-            z_mirror[:, 2] = 2 * max_z - points[:, 2]
+            z_mirror[:, 2] = 2 * max_z - 1 - points[:, 2]
             points = np.vstack((points, z_mirror))
 
+        # generate point cloud
         try:
-            point_size = float(self.entry.get())
+            point_size = float(self.entry_pointSize.get())
         except Exception as e:
             print(e)
             point_size = 0.005
         ps_cloud = ps.register_point_cloud(file_name, points[:, 0:3], point_render_mode='sphere', radius=point_size,
                                            color=(0.7, 0.7, 0.7))
+
+        # set camera
         try:
             zoom_factor = float(self.entry_zoom.get())
         except Exception as e:
             print(e)
             zoom_factor = 1
-        if zoom_factor == 0:
-            zoom_factor = 1
+        zoom_factor = 1 if zoom_factor == 0 else zoom_factor
         try:
             z_factor = float(self.entry_z.get())
         except Exception as e:
@@ -639,17 +618,24 @@ class Application(ttk.Frame):
             z_factor = 1
         print(f"zoom factor = {zoom_factor}")
         ps.look_at((-0.8 / zoom_factor, 0.8 / zoom_factor, 0.8 / zoom_factor * z_factor), (0, 0, 0))
+
+        # register displacement
         if has_dis:
             ps_cloud.add_scalar_quantity("displacement", points[:, 7], vminmax=(min_dis, max_dis), cmap="jet",
                                          enabled=False)
+
+        # save snapshot
         if save_png:
             ps.screenshot(os.path.join(_local_fem_path, f"{name}.png"), transparent_bg=True)
-        if show:
-            ps.show()
 
-        ps_cloud.remove()
-        self.update_listbox3()
-        self.update()
+        # show window
+        if show:
+            ps.show()  # program will stack here
+
+        # exit function
+        ps_cloud.remove()  # remove point cloud
+        self.update_listbox3()  # update listbox
+        self.update()  # redraw ui
 
     def generate_snapshots(self):
         idx = self.listbox3.curselection()[0]
@@ -676,8 +662,14 @@ class Application(ttk.Frame):
         self.update_image()
 
     def update_image(self):
+        """
+        update the image
+        :return:
+        """
+        if len(self.listbox3.curselection()) == 0:
+            return
         index = self.listbox3.curselection()[0]
-        name = self.listbox3.get(index).split("|")[0].strip()
+        name = self.listbox3.get(index).split("|")[0].strip()  # get pure name like 00010
         png_path = os.path.join(self.window_local_fem_path, f"{name}.png")
         if os.path.exists(png_path):
             self.image = Image.open(png_path)
@@ -685,14 +677,15 @@ class Application(ttk.Frame):
             h_box = 400
             w, h = self.image.size
             self.image = resize(w, h, w_box, h_box, self.image)
-            # 将图片转换为Tkinter可用的图像格式
+            # convert image to tk image
             self.tk_image = ImageTk.PhotoImage(self.image)
             self.image_label = tk.Label(self.window, image=self.tk_image, width=600, height=400)
-            self.image_label.grid(row=1, column=3, rowspan=13, pady=5, padx=5, sticky="nsew")
+            self.image_label.grid(row=1, column=3, rowspan=13, pady=5, padx=5, sticky="nsew")  # consistent with above
             print("image updated")
 
 
 class DownloadThread(threading.Thread):
+
     def __init__(self, app, selected_files):
         threading.Thread.__init__(self)
         self.app = app
@@ -715,10 +708,29 @@ class DownloadThread(threading.Thread):
             down_from_remote(client_sftp, remote_fem_path + '/' + file_n + end,
                              local_fem_path + '/' + file_n + end, callback=download_callback)
 
-        app.sync_with_server()
+        app.sync_with_server()  # refresh file list after download
+
+
+def download_callback(transferred, toBeTransferred, suffix='') -> None:
+    """
+    Callback function when the download update progress is updated
+    """
+    # written by chatGPT
+    bar_len = 100
+    filled_len = int(round(bar_len * transferred / float(toBeTransferred)))
+    percents = round(100.0 * transferred / float(toBeTransferred), 1)
+    bar = "\r[" + "".join(["=" for i in range(filled_len)]) + "".join(
+        [" " for i in range(bar_len - filled_len)]) + f"] {percents}%"
+    print(bar, end="")
+    # written by chatGPT end
+    app.progressbar2['value'] = int(percents)
 
 
 class GetSnapshotThread(threading.Thread):
+    """
+    Using threads causes OpenGL errors, it is not used in this project.
+    """
+
     def __init__(self, app, save_png=True, show=False, use_cache=True, save_cache=True):
         threading.Thread.__init__(self)
         self.app = app
@@ -732,22 +744,15 @@ class GetSnapshotThread(threading.Thread):
                                          save_cache=self.save_cache)
 
 
-def download_callback(transferred, toBeTransferred, suffix=''):
-    bar_len = 100
-    filled_len = int(round(bar_len * transferred / float(toBeTransferred)))
-    percents = round(100.0 * transferred / float(toBeTransferred), 1)
-    bar = "\r["
-    for i in range(filled_len):
-        bar += "="
-    for i in range(bar_len - filled_len):
-        bar += " "
-    bar += f"] {percents}%"
-    print(bar, end="")
-
-    app.progressbar2['value'] = int(percents)
-
 
 def load_ply(path: str, save_cache: bool = True, use_cache: bool = True) -> np.array:
+    """
+    load ply file from numpy array
+    :param path: file path for .ply
+    :param save_cache: whether to save cache (.npy)
+    :param use_cache: whether to use cache (.npy)
+    :return: data in numpy array format
+    """
     suffix: str = os.path.basename(path).split(".")[0]
     dir_name: str = os.path.dirname(os.path.abspath(path))
     npy_path: str = os.path.join(dir_name, f'{suffix}.npy')
@@ -780,14 +785,13 @@ def load_ply(path: str, save_cache: bool = True, use_cache: bool = True) -> np.a
         for i in tqdm(range(element_vertex), desc="loading data"):
             _line: str = f.readline()
             if _line == "":
-                print(f"reach end, i = {i}")
+                print(f"reach end early, i = {i}")
                 _points = _points[:i, :]
                 break
             data: list = _line.strip().split(" ")
             for j in range(len(properties)):
                 _points[i][j] = float(data[j])
 
-        print(_points)
         print(f"shape = {_points.shape}")
 
         # save npy
@@ -797,7 +801,16 @@ def load_ply(path: str, save_cache: bool = True, use_cache: bool = True) -> np.a
 
         return _points
 
+
 def load_ply_fast(path: str, save_cache: bool = True, use_cache: bool = True) -> np.array:
+    """
+    The speed improvement of this method is limited, and the file saving function has temporary problems.
+    ** do not use it **
+    :param path: file path
+    :param save_cache: whether to save cache (.npy)
+    :param use_cache: whether to use cache (.npy)
+    :return: data in numpy array format
+    """
     suffix: str = os.path.basename(path).split(".")[0]
     dir_name: str = os.path.dirname(os.path.abspath(path))
     npy_path: str = os.path.join(dir_name, f'{suffix}.npy')
@@ -808,21 +821,16 @@ def load_ply_fast(path: str, save_cache: bool = True, use_cache: bool = True) ->
         return np.load(npy_path)
 
     # load from file
-    with open(path, 'rb') as f:
-        data = np.fromfile(f, dtype=np.float32)
+    data = np.nan
+    try:
+        print("loading data...")
+        data = np.loadtxt(path, dtype='float', encoding='utf-8', skiprows=0,
+                          comments=['ply', 'format', 'comment', 'element', 'property', 'end_header'])  # 导入数据文
+    except Exception as e:
+        print(e)
+        exit()
 
-    element_vertex: int = int(data[10])
-    properties: list = ["x", "y", "z", "density", "f_x", "f_y", "f_z"]
-
-    print(
-        f'init complete\nelement_vertex count: {element_vertex}\nproperties count: {len(properties)}\n{properties}')
-
-    # reshape data
-    data = data[11:].reshape(-1, len(properties))
-
-    print(data)
     print(f"shape = {data.shape}")
-
     # save npy
     if save_cache:
         with open(npy_path, 'wb') as f:
@@ -830,6 +838,7 @@ def load_ply_fast(path: str, save_cache: bool = True, use_cache: bool = True) ->
         print(f"save cache to {npy_path}, note: this will take up a lot of space, delete it when not need")
 
     return data
+
 
 def get_filesize(path):
     fsize = os.path.getsize(path)
@@ -860,13 +869,24 @@ def resize(w, h, w_box, h_box, pil_image):
     return pil_image.resize((width, height), Image.ANTIALIAS)
 
 
+def close_client():
+    global client
+    if client is not None:
+        client.close()
+        client_t.close()
+        print("client closed at exit")
+
+
+atexit.register(close_client)
 # 创建主窗口
 root = tk.Tk()
-root.geometry("900x500")
+
+root.geometry("1000x480")
+
 root.resizable(False, False)
 style = ttk.Style("darkly")
 
-# gloval var
+# global var
 cs = tk.StringVar()
 cs.set("服务器未连接")
 cs2 = tk.StringVar()
@@ -885,13 +905,15 @@ permit_download = True
 has_ps = False
 
 # 创建应用程序
+root.call('tk', 'scaling', 1.5)
 app = Application(master=root)
-app.master.title("文件管理器")
+app.master.title("SPGrid TopoOpt Local File Manager")
+
 
 # 运行应用程序
 app.mainloop()
 
-if client is not None:
-    client.close()
-    client_t.close()
-    print("client closed")
+# if client is not None:
+#     client.close()
+#     client_t.close()
+#     print("client closed")

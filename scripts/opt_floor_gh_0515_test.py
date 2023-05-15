@@ -4,10 +4,10 @@ import taichi as tc
 # Initialize
 version = 0
 n = 800
-volume_fraction = 0.06
+volume_fraction = 0.08
 narrow_band = True
 
-opt = TopoOpt(res=(n,n,n),version=version,volume_fraction=volume_fraction,grid_update_start=5 if narrow_band else 1000000,fix_cells_near_force=True,fix_cells_at_dirichlet=False,progressive_vol_frac=0,connectivity_filtering=True,fixed_cell_density=1,boundary_smoothing_iters=3,smoothing_iters=1,cg_max_iterations=50,custom_name='sideBC0.01_frac0.06_r800_mirror_dontFixBC')
+opt = TopoOpt(res=(n,n,n),version=version,volume_fraction=volume_fraction,grid_update_start=5 if narrow_band else 1000000,fix_cells_near_force=False,fix_cells_at_dirichlet=False,progressive_vol_frac=0,connectivity_filtering=True,fixed_cell_density=1,boundary_smoothing_iters=3,smoothing_iters=1,cg_max_iterations=50,custom_name='sideBC0.01_frac0.08_r800_mirror')
 
 
 opt.populate_grid(domain_type='box', size=(0.5, 0.5, 0.05), mirror='xy')
