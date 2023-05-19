@@ -26,7 +26,13 @@ import datatable as dt
 config = configparser.ConfigParser()
 config.read('./config.ini')
 host_name = config.get('Server', 'host_name')
+if host_name == "":
+    host_name = os.environ.get("OMEN_HOST")
+    assert host_name is not None
 port = config.getint('Server', 'port')
+if port == "":
+    port = os.environ.get("OMEN_PORT")
+    assert port is not None
 user_name = config.get('Server', 'user_name')
 password = config.get('Server', 'password')
 if password == "":
