@@ -1,0 +1,42 @@
+# Parallel Studio 
+PACKAGE intel_TBE INTEL 2011.1111 80E8F94CE1E3 COMPONENTS="CClusOMPL \ 
+    CComp CCompL CCompM CCompW CLMKern CLMKernL CLMKernM CLMKernW \ 
+    EBComp FClusOMPL FComp FCompL FCompM FCompW IClsTktL IClsTktM \ 
+    IClsTktW IMemChkL IMemChkM IMemChkW ISVXscDbgWCE ITrAnlL \ 
+    ITrAnlM ITrAnlW ITrColL ITrColM ITrColW MKern MKernL MKernM \ 
+    MKernW MPass MPassL MPassM MPassW OEMXscDbgWCE OEMXscDbgW \ 
+    PerfAnl PerfAnlOmp PerfPrim PerfPrimL PerfPrimM PerfPrimW \ 
+    SampEnbL SampEnbM SampEnbW TAnalGuiL TAnalCliL TCheckCliL \ 
+    TCheckCliM TCheckCliW TCheckGuiL TCheckGuiM TCheckGuiW \ 
+    ThreadAnlGui ThreadBB ThreadBBL ThreadBBM ThreadBBW TPITrAnlL \ 
+    TPMathStatW TProfileCliW TProfileGuiW XlbtjL XlbtjM XlbtjW \ 
+    XscaleCCompWCE XscaleCCompW XscOSPlgP XscOSPlgS XscOSPlgN \ 
+    XscOSPlgL XsscL XsscM XsscW XssjL XssjM XssjW" OPTIONS=SUITE \ 
+    ck=104 SIGN=BB18F0AE004A 
+FEATURE intel_TBE INTEL 2011.1111 17-nov-2017 uncounted 88F28A55A7A9 \ 
+    VENDOR_STRING="SUPPORT=COM ENDIAN=EIA" HOSTID=ID=20111111 \ 
+    PLATFORMS="amd64_re i86_n ia64_n i86_mac i86_r i86_re it64_lr \ 
+    it64_re i86_g i86_l it64_n i86_x" ISSUER=Intel NOTICE="issued \ 
+    by TEAM TBE 2008-11-09" ck=171 SN=SMSA76531451 \ 
+    SIGN=788220568334 
+PACKAGE intel_TS_TBE INTEL 2011.1111 CA0AE83B2DEC \ 
+    COMPONENTS="CClusOMPL CComp CCompL CCompM CCompW CLMKern \ 
+    CLMKernL CLMKernM CLMKernW EBComp FClusOMPL FComp FCompL \ 
+    FCompM FCompW IClsTktL IClsTktM IClsTktW IMemChkL IMemChkM \ 
+    IMemChkW ISVXscDbgWCE ITrAnlL ITrAnlM ITrAnlW ITrColL ITrColM \ 
+    ITrColW MKern MKernL MKernM MKernW MPass MPassL MPassM MPassW \ 
+    OEMXscDbgWCE OEMXscDbgW PerfAnl PerfAnlOmp PerfPrim PerfPrimL \ 
+    PerfPrimM PerfPrimW SampEnbL SampEnbM SampEnbW TAnalGuiL \ 
+    TAnalCliL TCheckCliL TCheckCliM TCheckCliW TCheckGuiL \ 
+    TCheckGuiM TCheckGuiW ThreadAnlGui ThreadBB ThreadBBL \ 
+    ThreadBBM ThreadBBW TPITrAnlL TPMathStatW TProfileCliW \ 
+    TProfileGuiW XlbtjL XlbtjM XlbtjW XscaleCCompWCE XscaleCCompW \ 
+    XscOSPlgP XscOSPlgS XscOSPlgN XscOSPlgL XsscL XsscM XsscW \ 
+    XssjL XssjM XssjW" OPTIONS=SUITE ck=186 TS_OK \ 
+    SIGN=E725E4C26E50 
+FEATURE intel_TS_TBE INTEL 2011.1111 17-nov-2017 uncounted \ 
+    1D32F9CDB9F8 VENDOR_STRING="SUPPORT=COM ENDIAN=EIA" \ 
+    HOSTID=ID=20111111 PLATFORMS="amd64_re i86_n ia64_n i86_mac \ 
+    i86_r i86_re it64_lr it64_re i86_g i86_l it64_n i86_x" \ 
+    ISSUER=Intel NOTICE="issued by TEAM TBE 2008-11-09" ck=112 \ 
+    SN=SMSA76531451 TS_OK SIGN=705FD53E0210 
