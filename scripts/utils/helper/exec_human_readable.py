@@ -8,7 +8,6 @@ FOLDER_PATH = "/hy-tmp/taichi/projects/spgrid/scripts/"
 
 
 def ExecCmd(cmd: str, print_out: bool = False):
-
     r = os.popen(cmd)
     out = r.read()
     r.close()
@@ -20,12 +19,14 @@ def ExecCmd(cmd: str, print_out: bool = False):
 def OsSys(cmd: str):
     os.system(cmd)
 
+
 # 从base_coordinates_line文本中获取base_coordinate
 def get_base_coordinate(base_coordinates_line):
     square_brackets = base_coordinates_line.split(":")[1]
     x, y, z = value_from_square_brackets(square_brackets)
     base = (x, y, z)
     return base
+
 
 # 从方括号的文本中获取xyz值
 def value_from_square_brackets(square_brackets):
@@ -35,12 +36,14 @@ def value_from_square_brackets(square_brackets):
     z = int(tmp[2].strip())
     return x, y, z
 
+
 def get_coord_value(line, base):
     tmp = line.split(":")
     _x, _y, _z = value_from_square_brackets(tmp[0])
     value = float(tmp[1].strip())
     coord = (_x + base[0], _y + base[1], _z + base[2])
     return coord, value
+
 
 def count_valid_points_fast(lines):
     block = 0
@@ -49,6 +52,7 @@ def count_valid_points_fast(lines):
             block += 1
             continue
     return block * 64
+
 
 def count_valid_points_fast2(ff):
     block = 0
@@ -62,7 +66,7 @@ def count_valid_points_fast2(ff):
     return block * 64
 
 
-def exec_blocks(lines, prefix, file_path, threshold = 0.0):
+def exec_blocks(lines, prefix, file_path, threshold=0.0):
     start_time = time.time()
     with open(file_path, 'w', encoding='utf-8') as f:
         f.write(prefix)
@@ -90,7 +94,8 @@ def exec_blocks(lines, prefix, file_path, threshold = 0.0):
         f.close()
     exec_time = time.time() - start_time
 
-def exec_blocks2(f, prefix, file_path, threshold = 0.0):
+
+def exec_blocks2(f, prefix, file_path, threshold=0.0):
     start_time = time.time()
     with open(file_path, 'w', encoding='utf-8') as ff:
         ff.write(prefix)
@@ -125,37 +130,33 @@ def exec_blocks2(f, prefix, file_path, threshold = 0.0):
     exec_time = time.time() - start_time
 
 
-def exec_blocks3(human_readable_path:str, csv_path:str, out_file_path:str, threshold:float = 0.0):
+def exec_blocks3(human_readable_path: str, out_file_path: str, threshold: float = 0.0, csv_path: str = "",
+                 sum_path: str = ""):
     start_time = time.time()
     data = {}
     block = 0
     vertices = 0
 
+    # generate prefix
+    prefix = f"ply\n" \
+             f"format ascii 1.0\n" \
+             f"comment author: Jeremy\n" \
+             f"comment object: Topo\n" \
+             f"element vertex {valid_points}\n" \
+             f"property float x\n" \
+             f"property float y\n" \
+             f"property float z\n" \
+             f"property float density\n"
+
     if csv_path != "":
-        prefix = f"ply\n" \
-                 f"format ascii 1.0\n" \
-                 f"comment author: Jeremy\n" \
-                 f"comment object: Topo\n" \
-                 f"element vertex {valid_points}\n" \
-                 f"property float x\n" \
-                 f"property float y\n" \
-                 f"property float z\n" \
-                 f"property float density\n" \
-                 f"property float f_x\n" \
-                 f"property float f_y\n"\
-                 f"property float f_z\n" \
-                 f"end_header\n"
-    else:
-        prefix = f"ply\n" \
-                 f"format ascii 1.0\n" \
-                 f"comment author: Jeremy\n" \
-                 f"comment object: Topo\n" \
-                 f"element vertex {valid_points}\n" \
-                 f"property float x\n" \
-                 f"property float y\n" \
-                 f"property float z\n" \
-                 f"property float density\n" \
-                 f"end_header\n"
+        prefix += f"property float f_x\n" \
+                  f"property float f_y\n" \
+                  f"property float f_z\n"
+
+    if sum_path != "":
+        prefix += f"property float sum\n"
+
+    prefix += f"end_header\n"
 
     with open(human_readable_path, 'r') as f:
         while True:
@@ -171,7 +172,7 @@ def exec_blocks3(human_readable_path:str, csv_path:str, out_file_path:str, thres
                     if value > threshold:
                         vertices += 1
                         # ff.write(f"{coord[0]} {coord[1]} {coord[2]} {value}\n")
-                        data[coord] = [value, None]
+                        data[coord] = [value, None, None]  # default: [density, (f_x, f_y, f_z), sum_value]
 
                 block += 1
                 continue
@@ -188,17 +189,21 @@ def exec_blocks3(human_readable_path:str, csv_path:str, out_file_path:str, thres
     if csv_path != "":
         with open(csv_path, 'r') as f_csv:
             lines = f_csv.readlines()
-            total_lines = len((lines))
+            total_lines += len((lines))
         f_csv.close()
+    if sum_path != "":
+        with open(sum_path, 'r') as f_sum:
+            lines = f_sum.readlines()
+            total_lines += len((lines))
+        f_sum.close()
 
-
+    iter = 0
+    if csv_path != "":
         with open(csv_path, 'r') as f_csv:
-            iter = 0
-            data_keys = list(data.keys())
             while True:
                 line = f_csv.readline().strip().replace('\x00', '')
-                if iter % 1000 == 0:
-                    #print(f"iter {iter}/{total_lines} | line: {line}")
+                if iter % 10000 == 0:
+                    # print(f"iter {iter}/{total_lines} | line: {line}")
                     report_progress(i, 2, f"{iter}/{total_lines}")
                 iter += 1
                 if line == "":
@@ -218,37 +223,83 @@ def exec_blocks3(human_readable_path:str, csv_path:str, out_file_path:str, thres
                 if coord in data.keys():
                     data_item = list(data[coord])
                     data_item[1] = (f_x, f_y, f_z)
-                    data[(x, y, z)] = data_item
+                    data[coord] = data_item
                 else:
                     # print("coord not in data dict")
                     continue
 
             f_csv.close()
 
+    if sum_path != "":
+        with open(sum_path, 'r') as f_sum:
+            while True:
+                line = f_sum.readline().strip().replace('\x00', '')
+                if iter % 10000 == 0:
+                    # print(f"iter {iter}/{total_lines} | line: {line}")
+                    report_progress(i, 2, f"{iter}/{total_lines}")
+                iter += 1
+                if line == "":
+                    print("end")
+                    break
+
+                parts = line.split(",")
+                x, y, z, sum_value = \
+                    int(parts[0]), \
+                    int(parts[1]), \
+                    int(parts[2]), \
+                    float(parts[3])
+                coord = tuple((x, y, z))
+
+                if coord in data.keys():
+                    data_item = list(data[coord])
+                    data_item[2] = sum_value
+                    data[coord] = data_item
+                else:
+                    # print("coord not in data dict")
+                    continue
+
+            f_csv.close()
+
+
+    # write ply file
+    report_progress(i, 2, "writing file")
     with open(out_file_path, 'w', encoding='utf-8') as ff:
         ff.write(prefix)
         ff.close()
     with open(out_file_path, 'a', encoding='utf-8') as ff:
-        if csv_path != "":
+        if csv_path != "" or sum_path != "":
+            write_force = (csv_path != "")
+            write_sum = (sum_path != "")
+            # 大文件模式
             for coord in data:
                 values = list(data[coord])
                 density = values[0]
                 force = values[1]
-                if force is None:
-                    force = (0,0,0)
-                ff.write(f"{coord[0]} {coord[1]} {coord[2]} {density} {force[0]} {force[1]} {force[2]}\n")
+                sum_value = values[2]
+                if force is None and write_force:
+                    force = (0, 0, 0)
+                if sum_value is None and write_sum:
+                    sum_value = 0.0
+                line = f"{coord[0]} {coord[1]} {coord[2]} {density}"
+                if write_force:
+                    line += f" {force[0]} {force[1]} {force[2]}"
+                if write_sum:
+                    line += f" {sum_value}"
+                line += "\n"
+                ff.write(line)
         else:
+            # 小文件模式
             for coord in data:
                 values = list(data[coord])
                 density = values[0]
                 ff.write(f"{coord[0]} {coord[1]} {coord[2]} {density}\n")
         ff.close()
 
-
     exec_time = time.time() - start_time
 
-def report_progress(idx:int, step:int, add_msg:str = ""):
-    add_msg = add_msg + " | " if len(add_msg)>0 else ""
+
+def report_progress(idx: int, step: int, add_msg: str = ""):
+    add_msg = add_msg + " | " if len(add_msg) > 0 else ""
     step_msg = ""
     if step == 0:
         step_msg = "unzipping file"
@@ -260,8 +311,11 @@ def report_progress(idx:int, step:int, add_msg:str = ""):
         step_msg = "zipping ply   "
     else:
         step_msg = "unknown step  "
-    print(f"progress:processing {file_list[idx]} | {add_msg}current task {step_msg} | {len(file_list) - idx - 1} files left... ")
+    print(
+        f"progress:processing {file_list[idx]} | {add_msg} current task {step_msg} | {len(file_list) - idx - 1} files left... ")
     sys.stdout.flush()
+
+
 def ListFiles(file_path: str, reverse: bool = False, end: str = "", sort_type: str = "name"):
     """
     列出某个目录下的所有文件(原名：get_file_list)
@@ -293,6 +347,7 @@ def ListFiles(file_path: str, reverse: bool = False, end: str = "", sort_type: s
 
     return file_list
 
+
 def RemoveSuffix(fn: str):
     """
     去除文件后缀
@@ -317,6 +372,7 @@ def RemoveSuffixList(fn_list: list):
         new_fn_list.append(RemoveSuffix(fn))
     return new_fn_list
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--block", type=int, default=0, help='block')
@@ -336,19 +392,23 @@ if __name__ == "__main__":
     tcb_zips = RemoveSuffixList(ListFiles(fem_path, reverse=False, end=".tcb.zip", sort_type="name"))
     tcbs = RemoveSuffixList(ListFiles(fem_path, reverse=False, end=".tcb", sort_type="name"))
     txts = RemoveSuffixList(ListFiles(fem_path, reverse=False, end=".txt", sort_type="name"))
-    csvs = RemoveSuffixList(ListFiles(fem_path, reverse=False, end=".csv", sort_type="name"))
     plys = RemoveSuffixList(ListFiles(fem_path, reverse=False, end=".ply", sort_type="name"))
     ply_zips = RemoveSuffixList(ListFiles(fem_path, reverse=False, end=".ply.zip", sort_type="name"))
-
-
+    # additional
+    csvs = RemoveSuffixList(ListFiles(fem_path, reverse=False, end=".csv", sort_type="name"))
+    sums = RemoveSuffixList(ListFiles(fem_path, reverse=False, end=".sum", sort_type="name"))
 
     for i in range(len(file_list)):
         current_step = -2  # -2 代表没有这个tcb.zip文件，还没有算出来， -1代表还未执行任何操作 0表示已经完成了第0步，即解压，以此类推
-        has_csv = False  # 是否有csv受力文件
-        raw_name = file_list[i].replace(".tcb.zip","")
+        has_csv = False  # 是否有csv displacement文件
+        has_sum = False  # 是否有.sum sum文件
+        raw_name = file_list[i].replace(".tcb.zip", "")
         for n in csvs:
             if raw_name == n:
                 has_csv = True
+        for n in sums:
+            if raw_name == n:
+                has_sum = True
         for n in tcb_zips:
             if raw_name == n:
                 current_step = -1
@@ -376,20 +436,21 @@ if __name__ == "__main__":
         if target >= 0 and current_step < 0:
             # 第一步
 
-            report_progress(i,0)  # 报告进度
+            report_progress(i, 0)  # 报告进度
             fn = file_list[i]  # .tcb.zip
-            file = os.path.join(fem_path,fn)
+            file = os.path.join(fem_path, fn)
             ExecCmd(f"cd {fem_path} && unzip -d {fem_path} -o {file}")  # 解压文件
 
         if target >= 1 and current_step < 1:
             # 第二步
 
-            report_progress(i,1)  # 报告进度
+            report_progress(i, 1)  # 报告进度
             fn = file_list[i].replace(".zip", "")  # 000000.tcb
 
             os.makedirs(f"{FOLDER_PATH}tmp/{block}/", exist_ok=True)  # 创建临时文件夹
             out = ExecCmd(
-                f"cd {FOLDER_PATH}tmp/{block}/ && ti run convert_fem_solve {os.path.join(fem_path, fn)} --with-density",print_out=True)
+                f"cd {FOLDER_PATH}tmp/{block}/ && ti run convert_fem_solve {os.path.join(fem_path, fn)} --with-density",
+                print_out=True)
             # print(out)
             if out.__contains__("Permission"):
                 print("error")
@@ -400,10 +461,9 @@ if __name__ == "__main__":
             ExecCmd(f"mv {org_path} {new_path}")
             ExecCmd(f"rm {os.path.join(fem_path, fn)}")
 
-
         if target >= 2 and current_step < 2:
             # conver to ply
-            report_progress(i,2)
+            report_progress(i, 2)
             fn = file_list[i].replace(".tcb.zip", ".txt")  # 00000.txt
             input_path = os.path.join(fem_path, fn)
             with open(input_path, 'r') as f:
@@ -415,19 +475,23 @@ if __name__ == "__main__":
                 csv_path = ""
             else:
                 csv_path = input_path.replace(".txt", ".csv")
+            if not has_sum:
+                sum_path = ""
+            else:
+                sum_path = input_path.replace(".txt", ".sum")
             output_path = os.path.join(fem_path, fn.replace(".txt", ".ply"))
-            exec_blocks3(input_path, csv_path,output_path,0.0)
+            exec_blocks3(input_path, output_path, 0.0, csv_path=csv_path, sum_path=sum_path)
             ExecCmd(f"rm {input_path}")
         if target >= 3 and current_step < 3:
             # zip ply
-            report_progress(i,3)
+            report_progress(i, 3)
             fn = file_list[i].replace(".tcb.zip", ".ply")  # 00000.ply
-            output_name = fn.replace(".ply",".ply.zip")
-            #cmd = f"cd {fem_path} && zip {os.path.join(fem_path,output_name)} {os.path.join(fem_path,fn)}"
+            output_name = fn.replace(".ply", ".ply.zip")
+            # cmd = f"cd {fem_path} && zip {os.path.join(fem_path,output_name)} {os.path.join(fem_path,fn)}"
             cmd = f"cd {fem_path} && zip {output_name} {fn}"
             # print(cmd)
             ExecCmd(cmd)
-            ExecCmd(f"rm {os.path.join(fem_path,fn)}")
+            ExecCmd(f"rm {os.path.join(fem_path, fn)}")
 
     print(f"progress:time {round(time.time() - start_time, 1)}sec")
     sys.stdout.flush()

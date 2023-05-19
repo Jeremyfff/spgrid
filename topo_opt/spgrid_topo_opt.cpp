@@ -858,7 +858,10 @@ std::string SPGridTopologyOptimization3D::general_action(const Config &param) {
         auto objective_name =
             fmt::format("[{}]{}", i, objectives[i]->get_name());
         TC_PROFILER(objective_name);
-        auto obj = objectives[i]->compute(Dict("iter", 1));
+        Dict param1 = Dict();
+        param1.set("working_directory", working_directory);
+        param1.set("iter", 1);
+        auto obj = objectives[i]->compute(param1);
         TC_TRACE("  {} = {}", objective_name, obj);
         evaluated[objective_name] = obj;
         objective += obj;
@@ -1356,7 +1359,10 @@ real Opt::iterate(int iter) {
     for (int i = 0; i < (int)objectives.size(); i++) {
       auto objective_name = fmt::format("[{}]{}", i, objectives[i]->get_name());
       TC_PROFILER(objective_name);
-      auto obj = objectives[i]->compute(Dict("iter", iter));
+      Dict param = Dict();
+      param.set("working_directory", working_directory);
+      param.set("iter", iter);
+      auto obj = objectives[i]->compute(param);
       TC_TRACE("  {} = {}", objective_name, obj);
       evaluated[objective_name] = obj;
       objective += obj;

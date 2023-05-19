@@ -3,6 +3,9 @@ import numpy as np
 import open3d as o3d
 from typing import Tuple
 
+"""
+该文件为使用open3d库打开ply文件的尝试，已被弃用
+"""
 
 def read_ply_file(file_path: str) -> Tuple:
     # Read .ply file using open3d library

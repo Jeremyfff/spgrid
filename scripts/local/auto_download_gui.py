@@ -1,5 +1,6 @@
 import datetime
 import threading
+import time
 import tkinter as tk
 import ttkbootstrap as ttk
 from tkinter import filedialog
@@ -12,8 +13,15 @@ from PIL import ImageTk, Image
 import zipfile
 import numpy as np
 import polyscope as ps
-import customGUI
+import imgui_custom
 import atexit
+import utils
+import datatable as dt
+# IMPORTANT: MUST READ BEFORE RUNNING
+# Please modify the server and other configuration information in config.ini
+# Set your server password in system environment variable or config.ini
+# I set the variable name in the system environment to OMEN_PWD,
+# you can also change it to your own variable name
 
 config = configparser.ConfigParser()
 config.read('./config.ini')
@@ -21,6 +29,9 @@ host_name = config.get('Server', 'host_name')
 port = config.getint('Server', 'port')
 user_name = config.get('Server', 'user_name')
 password = config.get('Server', 'password')
+if password == "":
+    password = os.environ.get("OMEN_PWD")
+    assert password is not None
 remote_dir = config.get('Path', 'remote_dir')
 local_dir = config.get('Path', 'local_dir')
 
@@ -497,7 +508,7 @@ class Application(ttk.Frame):
             ps.set_program_name("SPgrid Preview")
             ps.set_autocenter_structures(True)
             ps.set_autoscale_structures(True)
-            ps.set_user_callback(customGUI.callback)
+            ps.set_user_callback(imgui_custom.callback)
             ps.set_up_dir('neg_z_up')
             ps.set_ground_plane_mode('none')
 
@@ -515,8 +526,8 @@ class Application(ttk.Frame):
         :param save_cache: whether to save cache
         :return:
         """
-        name = name.split("|")[0].strip() # get pure name like 00010
-        _local_fem_path = self.window_local_fem_path #
+        name = name.split("|")[0].strip()  # get pure name like 00010
+        _local_fem_path = self.window_local_fem_path  #
         print(f"name = {name}")
 
         # if cache not exist or not use cache, and no ply file found, unzip ply.zip
@@ -531,8 +542,15 @@ class Application(ttk.Frame):
         path = os.path.join(_local_fem_path, f"{name}.ply")
 
         # load points
-        points: np.array = load_ply(path, use_cache=use_cache, save_cache=save_cache)
+        points, p2idx = load_ply(path, use_cache=use_cache, save_cache=save_cache)  # p2idx is the short name for [
+        # property to index]
+        print("==============property : index=================")
+        print(p2idx)
+
         file_name = os.path.basename(path)
+
+        has_dis = 'f_x' in p2idx
+        has_sum = 'sum' in p2idx
 
         # remove low density points
         try:
@@ -540,59 +558,68 @@ class Application(ttk.Frame):
         except Exception as e:
             print(e)
             densThresh = 0.05
-        points: np.array = points[points[:, 3] > densThresh]  # density threshold
+        points: np.array = points[points[:, p2idx['density']] > densThresh]  # density threshold
         print(f"points.shape {points.shape}")
 
         # get bounds
-        max_x = np.max(points[:, 0])
-        max_y = np.max(points[:, 1])
-        max_z = np.max(points[:, 2])
-        min_x = np.min(points[:, 0])
-        min_y = np.min(points[:, 1])
-        min_z = np.min(points[:, 2])
+        max_x = np.max(points[:, p2idx['x']])
+        max_y = np.max(points[:, p2idx['y']])
+        max_z = np.max(points[:, p2idx['z']])
+        min_x = np.min(points[:, p2idx['x']])
+        min_y = np.min(points[:, p2idx['y']])
+        min_z = np.min(points[:, p2idx['z']])
         print(f"bound x:{min_x}~{max_x}, y:{min_y}~{max_y}, z:{min_z}~{max_z}")
 
         # process mirror behaviour
         # get rid of side points
         mirror = self.entry_mirror.get()
         if 'x' in mirror:
-            points = points[points[:, 0] < max_x]
+            points = points[points[:, p2idx['x']] < max_x]
         if 'y' in mirror:
-            points = points[points[:, 1] < max_y]
+            points = points[points[:, p2idx['y']] < max_y]
         if 'z' in mirror:
-            points = points[points[:, 2] < max_z]
+            points = points[points[:, p2idx['z']] < max_z]
+
+
 
         # get displacement
-        has_dis = False
         min_dis, max_dis = 0, 0
-        if points.shape[1] > 4:
-            has_dis = True
+        if has_dis:
             dis: np.array = np.sqrt(
-                points[:, 4] * points[:, 4] + points[:, 5] * points[:, 5] + points[:, 6] * points[:, 6])
+                points[:, p2idx['f_x']] * points[:, p2idx['f_x']]
+                + points[:, p2idx['f_y']] * points[:, p2idx['f_y']]
+                + points[:, p2idx['f_z']] * points[:, p2idx['f_z']])
             points = np.hstack((points, dis[:, np.newaxis]))
-            min_dis = round(np.min(points[:, 7]), 3)
-            max_dis = round(np.max(points[:, 7]), 3)
+            p2idx['dis'] = points.shape[1] - 1
+            print(p2idx)
+            min_dis = round(np.min(points[:,  p2idx['dis']]), 3)
+            max_dis = round(np.max(points[:,  p2idx['dis']]), 3)
+        # get sum
+        min_sum, max_sum = 0, 0
+        if has_sum:
+            min_sum = round(np.min(points[:, p2idx['sum']]), 3)
+            max_sum = round(np.max(points[:, p2idx['sum']]), 3)
 
         # update custom GUI
         if has_dis:
-            customGUI.min_dis = min_dis
-            customGUI.max_dis = max_dis
+            imgui_custom.min_dis = min_dis
+            imgui_custom.max_dis = max_dis
             print(f"min_dis: {min_dis}, max_dis: {max_dis}")
         else:
-            customGUI.min_dis = 0
-            customGUI.max_dis = 0
+            imgui_custom.min_dis = 0
+            imgui_custom.max_dis = 0
 
         if 'x' in mirror:
             x_mirror = points.copy()
-            x_mirror[:, 0] = 2 * max_x - 1 - points[:, 0]
+            x_mirror[:, p2idx['x']] = 2 * max_x - 1 - points[:, p2idx['x']]
             points = np.vstack((points, x_mirror))
         if 'y' in mirror:
             y_mirror = points.copy()
-            y_mirror[:, 1] = 2 * max_y - 1 - points[:, 1]
+            y_mirror[:, p2idx['y']] = 2 * max_y - 1 - points[:, p2idx['y']]
             points = np.vstack((points, y_mirror))
         if 'z' in mirror:
             z_mirror = points.copy()
-            z_mirror[:, 2] = 2 * max_z - 1 - points[:, 2]
+            z_mirror[:, p2idx['z']] = 2 * max_z - 1 - points[:, p2idx['z']]
             points = np.vstack((points, z_mirror))
 
         # generate point cloud
@@ -601,7 +628,8 @@ class Application(ttk.Frame):
         except Exception as e:
             print(e)
             point_size = 0.005
-        ps_cloud = ps.register_point_cloud(file_name, points[:, 0:3], point_render_mode='sphere', radius=point_size,
+
+        ps_cloud = ps.register_point_cloud(file_name, points[:,  p2idx['x']:p2idx['z']+1], point_render_mode='sphere', radius=point_size,
                                            color=(0.7, 0.7, 0.7))
 
         # set camera
@@ -621,8 +649,12 @@ class Application(ttk.Frame):
 
         # register displacement
         if has_dis:
-            ps_cloud.add_scalar_quantity("displacement", points[:, 7], vminmax=(min_dis, max_dis), cmap="jet",
+            ps_cloud.add_scalar_quantity("displacement", points[:, p2idx['dis']], vminmax=(min_dis, max_dis), cmap="jet",
                                          enabled=False)
+
+        # register sum value
+        if has_sum:
+            ps_cloud.add_scalar_quantity("sum", points[:, p2idx['sum']], vminmax=(min_sum, max_sum), cmap="jet", enabled=False)
 
         # save snapshot
         if save_png:
@@ -744,8 +776,7 @@ class GetSnapshotThread(threading.Thread):
                                          save_cache=self.save_cache)
 
 
-
-def load_ply(path: str, save_cache: bool = True, use_cache: bool = True) -> np.array:
+def load_ply(path: str, save_cache: bool = True, use_cache: bool = True) -> (np.array, dict):
     """
     load ply file from numpy array
     :param path: file path for .ply
@@ -753,19 +784,19 @@ def load_ply(path: str, save_cache: bool = True, use_cache: bool = True) -> np.a
     :param use_cache: whether to use cache (.npy)
     :return: data in numpy array format
     """
+
+    properties: list = []
+    propertie2idx: dict = {}
+
+    start_time = time.time()
     suffix: str = os.path.basename(path).split(".")[0]
     dir_name: str = os.path.dirname(os.path.abspath(path))
     npy_path: str = os.path.join(dir_name, f'{suffix}.npy')
 
-    # fast path
-    if use_cache and os.path.exists(npy_path):
-        print(f"use cached file {npy_path}")
-        return np.load(npy_path)
-
     # load from file
     with open(path) as f:
         element_vertex: int = 0
-        properties: list = []
+        # properties: list = []
         while True:
             _line: str = f.readline()
 
@@ -778,8 +809,19 @@ def load_ply(path: str, save_cache: bool = True, use_cache: bool = True) -> np.a
                 prop: str = _line.strip().split(" ")[-1]
                 properties.append(prop)
 
+        for i in range(len(properties)):
+            propertie2idx[properties[i]] = i
+
         print(
             f'init complete\nelement_vertex count: {element_vertex}\nproperties count: {len(properties)}\n{properties}')
+
+        # fast path
+        if use_cache and os.path.exists(npy_path):
+            print(f"use cached file {npy_path}")
+
+            return np.load(npy_path), propertie2idx
+
+
         _points = np.empty(shape=(element_vertex, len(properties)))
 
         for i in tqdm(range(element_vertex), desc="loading data"):
@@ -799,7 +841,9 @@ def load_ply(path: str, save_cache: bool = True, use_cache: bool = True) -> np.a
             np.save(npy_path, _points)
             print(f"save cache to {npy_path}, note: this will take up a lot of space, delete it when not need")
 
-        return _points
+        end_time = time.time()
+        print(f"load time(vanilla python): {end_time - start_time}s")
+        return _points, propertie2idx
 
 
 def load_ply_fast(path: str, save_cache: bool = True, use_cache: bool = True) -> np.array:
@@ -840,6 +884,10 @@ def load_ply_fast(path: str, save_cache: bool = True, use_cache: bool = True) ->
     return data
 
 
+def load_ply_cython(path: str, save_cache: bool = True, use_cache: bool = True) -> np.array:
+    return utils.load_ply_vanilla(path, save_cache, use_cache)
+
+
 def get_filesize(path):
     fsize = os.path.getsize(path)
     fsize = fsize / float(1024 * 1024)
@@ -875,45 +923,58 @@ def close_client():
         client.close()
         client_t.close()
         print("client closed at exit")
+    else:
+        print("no client, safe exit")
 
 
-atexit.register(close_client)
-# 创建主窗口
-root = tk.Tk()
+def init():
+    global app, root, style, cs, cs2, client, client_t, client_sftp, remote_task_name_list, remote_task_path_list
+    global remote_task_path, local_task_path, remote_fem_path, local_fem_path, diff_files_n, permit_download, has_ps
 
-root.geometry("1000x480")
+    atexit.register(close_client)
+    # create main window
+    root = tk.Tk()
+    root.geometry("1000x480")
+    root.resizable(True, True)
+    style = ttk.Style("darkly")
 
-root.resizable(False, False)
-style = ttk.Style("darkly")
+    # global var
+    cs = tk.StringVar()
+    cs.set("服务器未连接")
+    cs2 = tk.StringVar()
+    cs2.set("")
+    client = None
+    client_t = None
+    client_sftp = None
+    remote_task_name_list = []
+    remote_task_path_list = []
+    remote_task_path = ""
+    local_task_path = ""
+    remote_fem_path = ""
+    local_fem_path = ""
+    diff_files_n = []
+    permit_download = True
+    has_ps = False
 
-# global var
-cs = tk.StringVar()
-cs.set("服务器未连接")
-cs2 = tk.StringVar()
-cs2.set("")
-client = None
-client_t = None
-client_sftp = None
-remote_task_name_list = []
-remote_task_path_list = []
-remote_task_path = ""
-local_task_path = ""
-remote_fem_path = ""
-local_fem_path = ""
-diff_files_n = []
-permit_download = True
-has_ps = False
-
-# 创建应用程序
-root.call('tk', 'scaling', 1.5)
-app = Application(master=root)
-app.master.title("SPGrid TopoOpt Local File Manager")
+    # create application
+    root.call('tk', 'scaling', 1.5)  # If you encounter problems such as too large or too small display ratio,
+                                     # please adjust this value
+    app = Application(master=root)
+    app.master.title("SPGrid TopoOpt Local File Manager")
 
 
-# 运行应用程序
-app.mainloop()
+def run():
+    # run application
+    global app
+    app.mainloop()
 
-# if client is not None:
-#     client.close()
-#     client_t.close()
-#     print("client closed")
+
+def main_func():
+
+    init()
+    run()
+
+
+if __name__ == "__main__":
+    main_func()
+

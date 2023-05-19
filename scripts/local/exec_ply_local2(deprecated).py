@@ -4,8 +4,13 @@ import numpy as np
 import polyscope as ps
 # generating random 3D Points
 from tqdm import tqdm
-import customGUI
+import imgui_custom
 
+"""
+早期测试代码，仅实现简单的打开并预览某个ply文件的功能。
+其中许多代码已被替换为更新版本。
+您应该使用auto_download_gui中的功能替代他
+"""
 def load_ply(path: str, save_cache: bool = True, use_cache: bool = True) -> np.array:
     suffix: str = os.path.basename(path).split(".")[0]
     dir_name: str = os.path.dirname(os.path.abspath(path))

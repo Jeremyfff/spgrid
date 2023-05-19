@@ -10,15 +10,14 @@ volume_fraction = 0.08
 use_mirror = True
 
 # Initialize
-n = 300
+n = 400
 # tc.core.set_core_trigger_gdb_when_crash(True);
 opt = TopoOpt(res=(n, n, n), version=version, volume_fraction=volume_fraction,
               grid_update_start=5 if narrow_band else 1000000,
               progressive_vol_frac=5, cg_tolerance=1e-3,
               minimum_stiffness=0, minimum_density=1e-2,
               fix_cells_at_dirichlet=False, fix_cells_near_force=True, connectivity_filtering=True,
-              adaptive_min_fraction=False, verbose_snapshot=True,
-              custom_name="bridge_test")
+              adaptive_min_fraction=False, verbose_snapshot=True)
 
 x, y, z = 0.1, 0.1, 0.4
 if use_mirror:
