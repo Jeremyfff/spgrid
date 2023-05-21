@@ -15,8 +15,6 @@ import numpy as np
 import polyscope as ps
 import imgui_custom
 import atexit
-import utils
-import datatable as dt
 # IMPORTANT: MUST READ BEFORE RUNNING
 # Please modify the server and other configuration information in config.ini
 # Set your server password in system environment variable or config.ini
@@ -29,10 +27,11 @@ host_name = config.get('Server', 'host_name')
 if host_name == "":
     host_name = os.environ.get("OMEN_HOST")
     assert host_name is not None
-port = config.getint('Server', 'port')
+port = config.get('Server', 'port')
 if port == "":
     port = os.environ.get("OMEN_PORT")
     assert port is not None
+port = int(port)
 user_name = config.get('Server', 'user_name')
 password = config.get('Server', 'password')
 if password == "":
@@ -40,7 +39,7 @@ if password == "":
     assert password is not None
 remote_dir = config.get('Path', 'remote_dir')
 local_dir = config.get('Path', 'local_dir')
-
+ps_dir = config.get('Path', 'ps_dir')
 
 class Application(ttk.Frame):
 
@@ -143,7 +142,7 @@ class Application(ttk.Frame):
 
         self.output_text.insert("end", "正在下载文件: ps.txt\n")
         self.output_text.yview_moveto(1.0)
-        down_from_remote(client_sftp, '/hy-tmp/taichi/projects/spgrid/scripts/utils/ps.txt', 'ps.txt')
+        down_from_remote(client_sftp, ps_dir, 'ps.txt')
 
         remote_task_name_list, remote_task_path_list = Get_ps('ps.txt')
         idx = 0
@@ -280,7 +279,7 @@ class Application(ttk.Frame):
             self.window_local_fem_path = filedialog.askdirectory()
 
         self.window = tk.Toplevel(self)
-        self.window.geometry('1000x600')
+        self.window.geometry('1070x550')
 
         self.window.resizable(True, True)
         self.window.grid()
@@ -380,22 +379,28 @@ class Application(ttk.Frame):
                                           width=button_width)
         self.sub_button_save.grid(row=13, column=0, pady=5, columnspan=2, sticky="nsew")
 
+
+        self.progressbar3 = ttk.Progressbar(self.window, mode="determinate")
+        self.progressbar3.grid(row=14, column=0, pady=5, columnspan=2, sticky="nsew")
+        self.progressbar3['maximum'] = 100
+        self.progressbar3['value'] = 0
         # --------------------------------settings end---------------------------------------
         # blank
         temp_label_placement = ttk.Label(self.window, text="")
-        temp_label_placement.grid(row=14, column=0, pady=20, columnspan=2, sticky="nsew")
+        temp_label_placement.grid(row=15, column=0, pady=20, columnspan=2, sticky="nsew")
 
         # ==========================================LEFT END===================================================
 
         # 创建文件列表框
         self.listbox3 = tk.Listbox(self.window, selectmode=tk.EXTENDED)
-        self.listbox3.grid(row=1, column=2, rowspan=13, pady=5, padx=5, sticky="nsew")
+        self.listbox3.grid(row=1, column=2, rowspan=14, pady=5, padx=5, sticky="nsew")
         self.listbox3.bind('<<ListboxSelect>>', self.on_listbox3_select)
 
-        self.image = Image.open('./test.png')
+
+        self.image = Image.open('./blank.png')
         self.tk_image = ImageTk.PhotoImage(self.image)
         self.image_label = tk.Label(self.window, image=self.tk_image, width=600, height=400)
-        self.image_label.grid(row=1, column=3, rowspan=13, pady=5, padx=5, sticky="nsew")
+        self.image_label.grid(row=1, column=3, rowspan=14, pady=5, padx=5, sticky="nsew")
 
         self.update_listbox3()
 
@@ -548,7 +553,10 @@ class Application(ttk.Frame):
         path = os.path.join(_local_fem_path, f"{name}.ply")
 
         # load points
-        points, p2idx = load_ply(path, use_cache=use_cache, save_cache=save_cache)  # p2idx is the short name for [
+        points, p2idx = load_ply(path, use_cache=use_cache, save_cache=save_cache, app=self)  # p2idx is the short name for [
+
+        remain_progress:int = 100 - self.progressbar3['value']
+
         # property to index]
         print("==============property : index=================")
         print(p2idx)
@@ -566,7 +574,8 @@ class Application(ttk.Frame):
             densThresh = 0.05
         points: np.array = points[points[:, p2idx['density']] > densThresh]  # density threshold
         print(f"points.shape {points.shape}")
-
+        self.progressbar3['value'] = 100 - remain_progress / 5 * 4
+        self.update()
         # get bounds
         max_x = np.max(points[:, p2idx['x']])
         max_y = np.max(points[:, p2idx['y']])
@@ -586,7 +595,8 @@ class Application(ttk.Frame):
         if 'z' in mirror:
             points = points[points[:, p2idx['z']] < max_z]
 
-
+        self.progressbar3['value'] = 100 - remain_progress / 5 * 3
+        self.update()
 
         # get displacement
         min_dis, max_dis = 0, 0
@@ -606,6 +616,8 @@ class Application(ttk.Frame):
             min_sum = round(np.min(points[:, p2idx['sum']]), 3)
             max_sum = round(np.max(points[:, p2idx['sum']]), 3)
 
+        self.progressbar3['value'] = 100 - remain_progress / 5 * 3
+        self.update()
         # update custom GUI
         if has_dis:
             imgui_custom.min_dis = min_dis
@@ -628,6 +640,8 @@ class Application(ttk.Frame):
             z_mirror[:, p2idx['z']] = 2 * max_z - 1 - points[:, p2idx['z']]
             points = np.vstack((points, z_mirror))
 
+        self.progressbar3['value'] = 100 - remain_progress / 5 * 2
+        self.update()
         # generate point cloud
         try:
             point_size = float(self.entry_pointSize.get())
@@ -637,7 +651,8 @@ class Application(ttk.Frame):
 
         ps_cloud = ps.register_point_cloud(file_name, points[:,  p2idx['x']:p2idx['z']+1], point_render_mode='sphere', radius=point_size,
                                            color=(0.7, 0.7, 0.7))
-
+        self.progressbar3['value'] = 100 - remain_progress / 5 * 1
+        self.update()
         # set camera
         try:
             zoom_factor = float(self.entry_zoom.get())
@@ -661,6 +676,9 @@ class Application(ttk.Frame):
         # register sum value
         if has_sum:
             ps_cloud.add_scalar_quantity("sum", points[:, p2idx['sum']], vminmax=(min_sum, max_sum), cmap="jet", enabled=False)
+
+        self.progressbar3['value'] = 100
+        self.update()
 
         # save snapshot
         if save_png:
@@ -705,6 +723,9 @@ class Application(ttk.Frame):
         :return:
         """
         if len(self.listbox3.curselection()) == 0:
+            self.image = Image.open('./blank.png')
+            self.tk_image = ImageTk.PhotoImage(self.image)
+            self.image_label.grid(row=1, column=3, rowspan=14, pady=5, padx=5, sticky="nsew")  # consistent with above
             return
         index = self.listbox3.curselection()[0]
         name = self.listbox3.get(index).split("|")[0].strip()  # get pure name like 00010
@@ -718,9 +739,12 @@ class Application(ttk.Frame):
             # convert image to tk image
             self.tk_image = ImageTk.PhotoImage(self.image)
             self.image_label = tk.Label(self.window, image=self.tk_image, width=600, height=400)
-            self.image_label.grid(row=1, column=3, rowspan=13, pady=5, padx=5, sticky="nsew")  # consistent with above
+            self.image_label.grid(row=1, column=3, rowspan=14, pady=5, padx=5, sticky="nsew")  # consistent with above
             print("image updated")
-
+        else:
+            self.image = Image.open('./blank.png')
+            self.tk_image = ImageTk.PhotoImage(self.image)
+            self.image_label.grid(row=1, column=3, rowspan=14, pady=5, padx=5, sticky="nsew")  # consistent with above
 
 class DownloadThread(threading.Thread):
 
@@ -782,7 +806,7 @@ class GetSnapshotThread(threading.Thread):
                                          save_cache=self.save_cache)
 
 
-def load_ply(path: str, save_cache: bool = True, use_cache: bool = True) -> (np.array, dict):
+def load_ply(path: str, save_cache: bool = True, use_cache: bool = True, app=None) -> (np.array, dict):
     """
     load ply file from numpy array
     :param path: file path for .ply
@@ -830,7 +854,14 @@ def load_ply(path: str, save_cache: bool = True, use_cache: bool = True) -> (np.
 
         _points = np.empty(shape=(element_vertex, len(properties)))
 
+
         for i in tqdm(range(element_vertex), desc="loading data"):
+
+            # update progress
+            if i % 100000 == 0 and app is not None:
+                # app.progressbar3['maximum'] = 100
+                app.progressbar3['value'] = int(i / element_vertex * 100)
+                app.update()
             _line: str = f.readline()
             if _line == "":
                 print(f"reach end early, i = {i}")
