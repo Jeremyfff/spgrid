@@ -18,6 +18,6 @@ topopt2d
 *.npy
 *.ply.zip
 *.out
-.git
-.idea
-.vscode
+.git/*
+.idea/*
+.vscode/*
