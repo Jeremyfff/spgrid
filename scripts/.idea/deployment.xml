@@ -38,6 +38,20 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="pi@10.198.10.225:22">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@124.223.177.164:22">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="root@212.64.32.64:22">
         <serverdata>
           <mappings>

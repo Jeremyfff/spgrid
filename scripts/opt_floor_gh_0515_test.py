@@ -13,10 +13,8 @@ opt = TopoOpt(res=(n,n,n),version=version,volume_fraction=volume_fraction,grid_u
 opt.populate_grid(domain_type='box', size=(0.5, 0.5, 0.05), mirror='xy')
 
 opt.general_action(action='add_box_dirichlet_bc', axis_to_fix='xyz', bound0=(0.45, -0.5, -0.5), bound1=(0.5, -0.45, 0.14))
-
 opt.general_action(action='add_box_dirichlet_bc', axis_to_fix='xyz', bound0=(-0.5, -0.5, -0.5), bound1=(-0.45, -0.45, 0.14))
 opt.general_action(action='add_box_dirichlet_bc', axis_to_fix='xyz', bound0=(0.45, 0.45, -0.5), bound1=(0.5, 0.5, 0.14))
-
 opt.general_action(action='add_box_dirichlet_bc', axis_to_fix='xyz', bound0=(-0.5, 0.45, -0.5), bound1=(-0.45, 0.5, 0.14))
 
 # opt.general_action(action='add_box_dirichlet_bc', axis_to_fix='x', bound0=(0.49, -0.5, -0.05), bound1=(0.5, 0.5, -0.04))

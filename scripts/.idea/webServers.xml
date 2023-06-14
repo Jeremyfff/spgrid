@@ -31,7 +31,7 @@
         </fileTransfer>
       </webServer>
       <webServer id="f68d29a1-5df1-4175-a8b8-b0fdc854bcea" name="OMEN">
-        <fileTransfer accessType="SFTP" host="10.192.32.26" port="36850" sshConfigId="3aee0143-c087-4135-80f2-fd2448eeb3e5" sshConfig="root@10.192.32.26:36850 password">
+        <fileTransfer accessType="SFTP" host="10.192.46.106" port="36850" sshConfigId="3aee0143-c087-4135-80f2-fd2448eeb3e5" sshConfig="OMEN(seu-wlan)">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

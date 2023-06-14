@@ -114,7 +114,8 @@ class TopoOpt(Simulation):
 
         tc.trace("log duplicated")
         if kwargs.get('check_log_file', True):
-            assert (os.path.exists(self.log_fn))
+            # assert (os.path.exists(self.log_fn))
+            pass
 
     def output(self, iter):
         pass

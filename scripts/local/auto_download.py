@@ -166,7 +166,6 @@ def get_remote_file_list(client, path, end=""):
     remote_files = []
     for file in _remote_files:
         file = file.strip()
-
         if file.endswith(end) or end == "":
             remote_files.append(file)
     return remote_files

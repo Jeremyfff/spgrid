@@ -242,7 +242,7 @@ class App(npyscreen.NPSApp):
         self.ms_list.append(F.add(npyscreen.TitleSelectOne, max_height=3, value=[1, ], name="[Select File]",
                                   values=["All", "Last", "Custom idx"], scroll_exit=True))
         self.ms_list.append(F.add(npyscreen.TitleText, name="custom idx:"))
-        self.ms_list.append(F.add(npyscreen.TitleSlider, out_of=8, name="[Threads]", value=4))
+        self.ms_list.append(F.add(npyscreen.TitleSlider, out_of=25, name="[Threads]", value=4))
         self.ms_list.append(F.add(npyscreen.ButtonPress, name="Process",
                                   scroll_exit=True, when_pressed_function=self.exit_func))
         self.ms_list.append(F.add(npyscreen.ButtonPress, name="Process(nohup)",
@@ -517,9 +517,9 @@ class App(npyscreen.NPSApp):
             fib_str = fib_str[:-1]  # 去除最后的逗号
             kwargs = {'block': block, 'target': target, 'file_list': fib_str, 'fem_path': fem_path}
             if nohup:
-                ExecPy(os.path.join(SCRIPT_DIR, 'utils/helper/exec_human_readable.py'), True, kwargs)
+                ExecPy(os.path.join(SCRIPT_DIR, 'utils/helper/exec_human_readable_legacy.py'), True, kwargs)
             else:
-                task = ExecPy(os.path.join(SCRIPT_DIR, 'utils/helper/exec_human_readable.py'), False,
+                task = ExecPy(os.path.join(SCRIPT_DIR, 'utils/helper/exec_human_readable_legacy.py'), False,
                               kwargs)
                 self.tasks.append(task)  # 将任务加入任务列表
                 taskMonitor = TaskMonitor(self, task, f"block{str(block)}")

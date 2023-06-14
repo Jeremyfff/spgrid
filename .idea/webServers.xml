@@ -9,6 +9,13 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="8dcc7f73-36cf-49f2-b40f-158b8040de11" name="hyy-nb">
+        <fileTransfer accessType="SFTP" host="i-2.gpushare.com" port="41177" sshConfigId="d0f15d07-c7ac-4e68-b3f9-787ff21aef57" sshConfig="root@i-2.gpushare.com:41177 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>

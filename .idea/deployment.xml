@@ -17,7 +17,28 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="hyy-nb">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/hy-tmp/taichi/projects/spgrid" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="jetson@192.168.3.190:22">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="pi@10.198.10.225:22">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@124.223.177.164:22">
         <serverdata>
           <mappings>
             <mapping local="$PROJECT_DIR$" web="/" />

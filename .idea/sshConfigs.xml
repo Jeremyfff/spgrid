@@ -3,6 +3,7 @@
   <component name="SshConfigs">
     <configs>
       <sshConfig authType="PASSWORD" host="10.192.32.26" id="ed82c78b-d814-47b5-ba31-5ecd88f32d93" port="36850" nameFormat="DESCRIPTIVE" username="root" useOpenSSHConfig="true" />
+      <sshConfig authType="PASSWORD" host="i-2.gpushare.com" id="d0f15d07-c7ac-4e68-b3f9-787ff21aef57" port="41177" nameFormat="DESCRIPTIVE" username="root" useOpenSSHConfig="true" />
     </configs>
   </component>
 </project>

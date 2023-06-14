@@ -1,4 +1,5 @@
 import datetime
+import math
 import threading
 import time
 import tkinter as tk
@@ -627,6 +628,28 @@ class Application(ttk.Frame):
             imgui_custom.min_dis = 0
             imgui_custom.max_dis = 0
 
+        # # get S
+        # i_max_x = int(max_x) + 1
+        # i_max_y = int(max_y) + 1
+        # i_max_z = int(max_z) + 1
+        # S = np.zeros((i_max_x, i_max_y, i_max_z))
+        # K = np.zeros((i_max_x, i_max_y, i_max_z))
+        # u = np.zeros((i_max_x, i_max_y, i_max_z))
+        # penalty = 3
+        # minimum_stiffness = 1e-9
+        # for pt in points:
+        #     x = int(pt[p2idx['x']])
+        #     y = int(pt[p2idx['y']])
+        #     z = int(pt[p2idx['z']])
+        #     # sum * (opt.minimum_stiffness + std::pow(d, penalty) * (1 - opt.minimum_stiffness));
+        #     K[x][y][z] = pt[p2idx['sum']] * (minimum_stiffness + math.pow(pt[p2idx['density']], penalty) * (1 - minimum_stiffness))
+        #     u[x][y][z] = pt[p2idx['dis']]
+        # S = u.transpose((0,2,1)) * K * u
+        # print(f"S.shape {S.shape}")
+        # print(f"K.shape {K.shape}")
+        # input("")
+
+
         if 'x' in mirror:
             x_mirror = points.copy()
             x_mirror[:, p2idx['x']] = 2 * max_x - 1 - points[:, p2idx['x']]
@@ -675,7 +698,30 @@ class Application(ttk.Frame):
 
         # register sum value
         if has_sum:
-            ps_cloud.add_scalar_quantity("sum", points[:, p2idx['sum']], vminmax=(min_sum, max_sum), cmap="jet", enabled=False)
+            ps_cloud.add_scalar_quantity("K (full)", points[:, p2idx['sum']], vminmax=(min_sum,max_sum), cmap="jet", enabled=False)
+
+
+        # register opt value
+        opt = None
+        if has_dis and has_sum:
+            penalty = 3
+            minimum_stiffness = 1e-9
+            # sum * (opt.minimum_stiffness + std::pow(d, penalty) * (1 - opt.minimum_stiffness));
+            opt = points[:,p2idx['sum']] * (np.power(points[:,p2idx['density']], penalty) * (1 - minimum_stiffness) + minimum_stiffness )
+            opt_min = np.min(opt)
+            opt_max = np.max(opt)
+            ps_cloud.add_scalar_quantity("K", opt, vminmax=(opt_min, opt_max),
+                                         cmap="jet", enabled=False)
+
+
+        if has_dis and has_sum and any(opt):
+            F = opt * points[:, p2idx['dis']]
+            min_F = np.min(F)
+            max_F = np.max(F)
+            ps_cloud.add_scalar_quantity("F",F, vminmax=(min_F, max_F),
+                                         cmap="jet", enabled=False)
+
+
 
         self.progressbar3['value'] = 100
         self.update()
@@ -921,8 +967,6 @@ def load_ply_fast(path: str, save_cache: bool = True, use_cache: bool = True) ->
     return data
 
 
-def load_ply_cython(path: str, save_cache: bool = True, use_cache: bool = True) -> np.array:
-    return utils.load_ply_vanilla(path, save_cache, use_cache)
 
 
 def get_filesize(path):

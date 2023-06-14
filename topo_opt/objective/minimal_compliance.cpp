@@ -85,6 +85,9 @@ class MinimalCompliance : public Objective {
     std::mutex mut;
     real penalty = opt.get_penalty(iter);
     std::atomic<int> has_negative_dc(0);
+    std::cout << "=============================penalty: " << penalty << std::endl;
+    std::cout << "=============================opt.minimum_stiffness: " << opt.minimum_stiffness << std::endl;
+
 
 
     //custom code start

@@ -12,6 +12,7 @@
 
 原始项目链接：[https://github.com/yuanming-hu/spgrid_topo_opt](https://github.com/yuanming-hu/spgrid_topo_opt)
 
+本项目为个人项目使用，在原项目的基础上
 - 提供了安装流程引导
 - 修复了若干原代码中的bug
 - 提供一些后处理工具
