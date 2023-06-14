@@ -1,0 +1,13 @@
+# Parallel Studio
+PACKAGE PARSTUDIO INTEL 2025.0101 CFF9F369DF8A COMPONENTS="AdvXEl \
+	AdvXEw CCompL CCompW Comp-CW Comp-DCAF Comp-FW Comp-OpenMP \
+	Comp-PointerChecker DAAL-W FCompW FCompL IClsTktW IClsTktL \
+	IClsValL IClsValW ITrAnlW ITrAnlL ITrColW ITrColL MKernW \
+	MPassW MPassL PerfAnl PerfPrimW PerfPrimL StaticAnlL \
+	StaticAnlW ThreadAnlGui ThreadBB" OPTIONS=SUITE ck=160 \
+	SIGN=5224E3A4E0DA
+INCREMENT PARSTUDIO INTEL 2025.0101 1-jan-2050 uncounted 5CFA7ABC2A5B \
+	VENDOR_STRING="SUPPORT=COM ENDIAN=EIA" HOSTID=ID=11111111 \
+	PLATFORMS="i86_n i86_r i86_re ia64_n it64_lr it64_re amd64_re \
+	i86_mac x64_n x64_mac i86_x it64_n i86_l i86_g" ISSUER=TBE \
+	ck=175 SN=SMSA00000000 TS_OK SIGN=288D636CEDDE

@@ -2,7 +2,7 @@
 
 # 一、概述
 
-![Frame215.jpg](README%20d21396ef5b7a4e73b43ebca88c5c96bf/Frame215.jpg)
+![Frame215.jpg](README/volumn_04_light2.jpg)
 
 项目基于：**基于稀疏网格的窄带拓扑优化**
 
@@ -23,7 +23,7 @@
 
 相关中文博客：
 
-[基于稀疏网格的窄带拓扑优化](https://www.longlong.asia/2022/11/08/narrow-band-topology-optimization.html)
+[基于稀疏网格的窄带拓扑优化（www.longlong.asia）](https://www.longlong.asia/2022/11/08/narrow-band-topology-optimization.html)
 
 ### 1. 配置icc环境
 
@@ -45,7 +45,8 @@
 
 下载parallel_studio_xe_2019_update5_cluster_edition
 
-`wget [http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/15809/parallel_studio_xe_2019_update5_cluster_edition.tgz](http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/15809/parallel_studio_xe_2019_update5_cluster_edition.tgz)`
+`wget http://registrationcenter-download.intel.com/akdlm/irc_nas/tec/15809/parallel_studio_xe_2019_update5_cluster_edition.tgz`
+
 
 解压文件
 
@@ -59,11 +60,11 @@
 
 `sudo apt update`
 
-`apt-get install cpio`
+`sudo apt-get install cpio`
 
 `sudo apt-get install xorg`
 
-`apt-get install libasound2-dev`
+`sudo apt-get install libasound2-dev`
 
 `sudo apt-get install libgtk2.0-dev`
 
@@ -71,19 +72,16 @@
 
 `sudo apt-get install zip`
 
+`sudo apt-get install libtbb2`
+
 安装parallel_studio_xe_2019
 
 `cd ps && ./install.sh`
 
 - 安装过程
     
-    ![Untitled](README%20d21396ef5b7a4e73b43ebca88c5c96bf/Untitled.png)
     
-    回车
-    
-    空格若干次    回车
-    
-    accept
+    一路回车，接受使用条款
     
     2 I do NOT consent to the collection of my Information
     
@@ -136,7 +134,7 @@ source /opt/intel/impi/2019.5.281/intel64/bin/mpivars.sh
 
 键盘按 esc  输入 `:wq` 保存
 
-接着*`source* /opt/intel/intel2019u5.sh`
+接着`source /opt/intel/intel2019u5.sh`
 
 即可设置好环境变量
 
@@ -150,7 +148,7 @@ source /opt/intel/impi/2019.5.281/intel64/bin/mpivars.sh
 
 `sudo apt-get install libnlopt-dev`
 
-**安装 python环境3.8（如果使用原生ubuntu18.04，则需要配置这一步）**
+**安装 python环境3.8**
 
 `sudo apt install python3.8`
 
@@ -186,15 +184,13 @@ source /opt/intel/impi/2019.5.281/intel64/bin/mpivars.sh
 
 ### 2. 下载并编译taichi
 
-※若上一步跳过了，开机后直接输入*`source* /opt/intel/intel2019u5.sh`
-
 `cd /hy-tmp`
 
 **下载并安装taichi legacy**
 
-`wget [https://raw.githubusercontent.com/yuanming-hu/taichi/legacy/install.py](https://raw.githubusercontent.com/yuanming-hu/taichi/legacy/install.py)`
+`wget https://raw.githubusercontent.com/yuanming-hu/taichi/legacy/install.py`
 
-`python3 [install.py](http://install.py/)`
+`python3 install.py`
 
 若出现网络原因导致的失败，需要多试几次
 
@@ -202,9 +198,6 @@ source /opt/intel/impi/2019.5.281/intel64/bin/mpivars.sh
 
 `source ~/.bashrc`
 
-遇到 libtbbmalloc.so.2: cannot open shared object file 的报错
-
-`sudo apt-get install libtbb2`
 
 **将项目放置于taichi-projects文件夹下**
 
@@ -212,7 +205,7 @@ source /opt/intel/impi/2019.5.281/intel64/bin/mpivars.sh
 
 - 使用原版代码的情况：
     
-    `git clone [https://github.com/yuanming-hu/spgrid_topo_opt.git](https://github.com/yuanming-hu/spgrid_topo_opt.git)`
+    `git clone https://github.com/yuanming-hu/spgrid_topo_opt.git`
     
     将spgrid_topo_opt文件夹改名为spgrid:
     
@@ -230,9 +223,10 @@ source /opt/intel/impi/2019.5.281/intel64/bin/mpivars.sh
     
     修改后 esc :wq 保存退出
     
-- 使用本项目修改后的代码
+
+- 或使用本项目修改后的代码
     
-    `git clone [https://github.com/Jeremyfff/spgrid.git](https://github.com/Jeremyfff/spgrid.git)`
+    `git clone https://github.com/Jeremyfff/spgrid.git`
     
 
 **编译solver：**
@@ -251,7 +245,7 @@ source /opt/intel/impi/2019.5.281/intel64/bin/mpivars.sh
 
 [https://developer.nvidia.com/cuda-gpus#collapseOne](https://developer.nvidia.com/cuda-gpus#collapseOne)
 
-V100 为 70  P4为61 3070=86，没有CUDA为0，根据查询到的CUDA架构修改下方的CUDA_ARCH 
+没有CUDA为0，根据查询到的CUDA架构修改下方的CUDA_ARCH 
 
 ```
 export TC_MKL_PATH=/opt/intel/compilers_and_libraries_2019/linux/mkl/lib/intel64_lin/
@@ -262,6 +256,10 @@ export TC_USE_DOUBLE=1
 `ti build`
 
 出现 Built target taichi_topo_opt 表明编译成功
+
+遇到permission denied问题，`su root`
+
+`chmod +x /hy-tmp/taichi/bin/ti`
 
 # 三、 **运行示例文件**
 
@@ -278,7 +276,7 @@ export TC_USE_DOUBLE=1
 
 `python3 opt_bridge.py`
 
-※注意：遇到 libtbbmalloc.so.2: cannot open shared object file: No such file or directory 问题 是因为开机后没有运行以下指令*`source* /opt/intel/intel2019u5.sh`
+※注意：遇到 libtbbmalloc.so.2: cannot open shared object file: No such file or directory 问题 是因为开机后没有运行以下指令`source /opt/intel/intel2019u5.sh`
 
 后台运行：
 
@@ -292,11 +290,11 @@ export TC_USE_DOUBLE=1
 
 `python3 helper.py`
 
-![Untitled](README%20d21396ef5b7a4e73b43ebca88c5c96bf/Untitled%202.png)
+![Untitled](README/Untitled%202.png)
 
 选择`1. Start a new solver`
 
-![Untitled](README%20d21396ef5b7a4e73b43ebca88c5c96bf/Untitled%203.png)
+![Untitled](README/Untitled%203.png)
 
 nohup: 是否后台运行
 
@@ -335,11 +333,11 @@ ti run convert_fem_solve 00002.tcb --with-density
 
 在主菜单选择`3. Manage Solvers` 选择当前正在运行的任务
 
-![Untitled](README%20d21396ef5b7a4e73b43ebca88c5c96bf/Untitled%204.png)
+![Untitled](README/Untitled%204.png)
 
 选择Process
 
-![Untitled](README%20d21396ef5b7a4e73b43ebca88c5c96bf/Untitled%205.png)
+![Untitled](README/Untitled%205.png)
 
 Target，处理文件的目标，一般选择为压缩后的ply.zip文件
 
@@ -353,4 +351,4 @@ Threads 线程数。根据文件大小，每个线程会占用一定的内存空
 
 处理完成后，下载至本地计算机并进一步预览：
 
-[使用**[spgrid/](https://github.com/Jeremyfff/spgrid/tree/main)**scripts/local/auto_download_gui.py自动下载到本地文件夹](README%20d21396ef5b7a4e73b43ebca88c5c96bf/%E4%BD%BF%E7%94%A8spgrid%20scripts%20local%20auto_download_gui%20py%E8%87%AA%E5%8A%A8%E4%B8%8B%E8%BD%BD%E5%88%B0%E6%9C%AC%E5%9C%B0%20026988fdc4114c48b9631836ca632055.md)
+[使用[spgrid/](https://github.com/Jeremyfff/spgrid/tree/main)**scripts/local/auto_download_gui.py自动下载到本地文件夹](README%20d21396ef5b7a4e73b43ebca88c5c96bf/%E4%BD%BF%E7%94%A8spgrid%20scripts%20local%20auto_download_gui%20py%E8%87%AA%E5%8A%A8%E4%B8%8B%E8%BD%BD%E5%88%B0%E6%9C%AC%E5%9C%B0%20026988fdc4114c48b9631836ca632055.md)
